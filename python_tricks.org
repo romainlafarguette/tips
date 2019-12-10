@@ -1,0 +1,1780 @@
+#+TITLE:     Tips for Python
+#+AUTHOR:    Romain Lafarguette
+#+EMAIL:     rlafarguette@imf.org
+#+DATE:      Time-stamp: "2019-12-10 10:23:38 RLafarguette"
+
+#+begin_src python
+"""
+Some tricks for Python
+romain.lafarguette@ecb.europa.eu
+Time-stamp: "2019-12-09 10:28:23 rlafarguette"
+"""
+#+end_src
+
+* Modules, classes and functions
+#+begin_src python
+
+###############################################################################
+#%% Modules, classes and functions
+import sys, os, imp                  ## Operating system and modules
+import pandas as pd                  ## Dataframes
+import datetime                      ## Date and time
+import numpy as np                   ## Numerical methods
+
+
+## Current path: simply with os
+root_dir = os.path.abspath(os.getcwd() + "/../../") # Come back up two levels
+clean_dir = os.path.join(root_dir, 'Clean')
+## Functions
+from inspect import getsourcefile    ## Return current source file
+
+## Self-defined classes and functions
+#### Define the current folder (2 ways)
+cur_folder = os.getcwd()
+cur_folder = os.path.abspath(getsourcefile(lambda:0)).rsplit('\\', 1)[0]
+sys.path.append(os.path.join(cur_folder.rsplit('\\', 1)[0], "0_Class"))
+import Romain_functions
+imp.reload(Romain_functions) # Useful when I make some modifications
+
+#### Import every object from module (pay attention to name collusion)
+from Romain_functions import *
+
+## Warnings management
+import warnings
+warnings.simplefilter(action = "ignore")
+
+## Pandas number display preferred option
+pd.set_option('display.float_format', lambda x: '%.3f' % x)
+
+## Disable the annoying warning for pandas copy
+pd.options.mode.chained_assignment = None  # default='warn'
+
+## Nice documentation
+## http://dataconomy.com/14-best-python-pandas-features/
+#+end_src
+
+
+** Syntax tric
+#+begin_src python
+
+## Compact way of entering arguments
+mcond = {'left_index':True, 'right_index':True}
+
+df.merge(dpls, **mcond)
+#+end_src
+
+** Install at the Fund, SSL problem
+#+begin_src python
+
+###############################################################################
+### Installation from Python
+###############################################################################
+## Single package distribution from Python
+import pip
+from subprocess import call
+packagename = 'jupyter-emacskeys'
+call("python -m pip install {} --index-url=http://pypi.python.org/simple/ --trusted-host pypi.python.org".format(packagename), shell=True)
+
+## Update the full python distribution
+import pip
+from subprocess import call
+
+for dist in pip.get_installed_distributions():
+    call("python -m pip install {} --upgrade --index-url=http://pypi.python.org/simple/ --trusted-host pypi.python.org".format(dist.project_name), shell=True)
+
+## Install from a local directory
+import pip
+from subprocess import call
+packagename = 'rpy2‑2.7.8‑cp35‑none‑win32.whl'
+call("python -m pip install c:/Users/rlafarguette/Desktop/{}".format(packagename), shell=True)
+
+## Install through Python and conda
+from subprocess import call
+call("conda install -c r-irkernel", shell=True)
+
+## Especially, it works with rpy2 !!
+call("conda install -c r rpy2=2.8.5", shell=True)
+
+## Can call directly from anaconda
+Anaconda3/Scripts/
+R_HOME variable : e:\usr-profiles\rlafarguette\R-3.3.2\
+Don't put xbin/x64
+https://sites.google.com/site/aslugsguidetopython/data-analysis/pandas/calling-r-from-python
+
+## Start jupyter in any folder (bat file)
+:: Start a Jupyter notebook into a convenient folder
+
+cd e:/data/rlafarguette/Paper_27_HFT/Codes/Charts
+
+jupyter notebook
+
+pause
+
+
+###############################################################################
+### Command line installation
+###############################################################################
+pip install --index-url=http://pypi.python.org/simple/ --trusted-host pypi.python.org pythonPackage
+
+## Update pip
+python -m pip install --upgrade --index-url=http://pypi.python.org/simple/ --trusted-host pypi.python.org pip
+
+###############################################################################
+### Conda installation
+###############################################################################
+
+## For conda, simply deactivate SSL certificates first on the command line
+conda config --set ssl_verify false
+conda update --all
+
+## For R, so that it recognized the path
+http://stackoverflow.com/questions/10077689/r-cmd-on-windows-7-error-r-is-not-recognized-as-an-internal-or-external-comm
+
+## Typically in user account, change PATH with: C:\Program Files\R\R-3.3.0\bin\x64
+
+#+end_src
+
+
+
+* Class and inheritance
+#+begin_src python
+
+
+## Create class and functions "on the fly"
+
+## On the fly class definition
+RomainClasse = type('RomainClasse', (object,), {}) # Class creation
+RomainClasse.test = 2
+RomainClasse.method_test = lambda x:print(x+1)
+
+
+https://stackoverflow.com/questions/287085/what-do-args-and-kwargs-mean
+
+########################################################################
+#%% Class and inheritance
+class Quote(Order):  ## The quote class is inheriting from
+
+    # Instantiation
+    def __init__(self,DATABASE,INDEX):      # Should be at least the same inputs of the parent class
+
+        Order.__init__(self,DATABASE,INDEX) # Inheritance the input
+
+        # Load the modules I need
+        self.pd = __import__('pandas')
+
+
+        self.distance     = float(DATABASE.distance.iloc[INDEX])
+        self.amount       = float(DATABASE.amount.iloc[INDEX])
+
+     # Function
+     def print_attribute(self): ## Self make sure that all the attributes of the object are loaded
+         print(self.distance)
+
+## Simple initializer
+class results(object):
+    # The class "constructor" - It's actually an initializer
+    def __init__(self, fit, fit_star):
+
+        # Return regressions summaries
+        self.first_regression = fit.summary2()
+        self.regression = fit_star.summary2()
+
+
+###############################################################################
+#%% Inheritance with transmission of methods + results
+###############################################################################
+
+class Father(object):
+    @classmethod # Important to pass the instances and methods to child classes
+    def __init__(self, value):
+        self.value = value
+
+class Child(Father):
+    def __init__(self, father, new_value):
+        self.new_value = new_value
+
+f1 = Father(1)
+c2 = Child(f1, 3)
+
+c2.value
+c2.new_value
+
+
+###############################################################################
+#%% Logical inheritance: only the class structure
+###############################################################################
+
+class StructureChild(Parent): ## Inherit the class but not its results
+    def __init__(self, text):
+        Parent.__init__(text) # Inheritance of the input
+        
+#%%
+structurechild1 = StructureChild('test')
+
+structurechild1.oui
+
+
+###############################################################################
+#%% Through Super
+###############################################################################
+class Super( object ):
+   def __init__( self, this, that ):
+       self.this = this
+       self.that = that
+
+class Sub( Super ):
+   def __init__( self, myStuff, *args, **kw ):
+       super( Sub, self ).__init__( *args, **kw )
+       self.myStuff= myStuff
+
+x= Super( 2.7, 3.1 )
+y= Sub( "green", 7, 6 )
+
+
+
+###############################################################################
+#%% Pass all attributes from one class to another
+###############################################################################
+
+class Parent(object):
+    def __init__(self): 
+        self.truc = 'a'
+
+    def wrapper(self, machin):
+        return(Wrapper(self, machin))
+
+   
+class Wrapper(object):
+    def __init__(self, Parent, machin): # Import from Parent class
+        self.__dict__.update(Parent.__dict__) # Pass all attributes
+        self.machin = machin
+
+
+# Important: here I am not doing class inheritance, else I would recompute the
+# parent each time. Rather, I design a wrapper class
+
+
+
+
+###############################################################################
+#%% Inspect the inheritance arguments
+###############################################################################
+import inspect
+def __init__(self, NpSampler, exog_cond_d):
+    self.truc = inspect.getargspec(NpSampler.__init__)
+
+
+
+#+end_src
+
+
+
+
+
+* System Functions
+** Files and folders
+#+begin_src python
+
+## List every files in a folder
+from os import listdir
+files = listdir("folder_path")
+
+## Problem of unicode error
+## Need to add 'r' (raw) to the folder path http://stackoverflow.com/questions/1347791/unicode-error-unicodeescape-codec-cant-decode-bytes-cannot-open-text-file
+os.chdir(r'folder_path')
+
+## Retrieve the 50 largest files from a directory (pay attention when running the generator)
+dirpath = os.path.abspath('folder_path')
+all_files         = (os.path.join(basedir, filename) for basedir, dirs, files in os.walk(dirpath) for filename in files)
+most_traded_files = sorted(all_files, key = os.path.getsize, reverse= True)[:50]
+
+#+end_src
+
+** Installing nbextension
+#+begin_src python
+#################################################################
+#%% Installing a nbextension with Python
+
+import notebook.nbextensions
+notebook.nbextensions.install_nbextension('https://rawgithub.com/minrk/ipython_extensions/master/nbextensions/gist.js',
+user=True)
+#+end_src
+
+** R into Python
+#+begin_src python
+
+
+#%% R into Python through rpy2
+
+#1. Install rpy2 through conda:
+from subprocess import call
+call("conda install -c r rpy2=2.8.5", shell=True)
+
+#2. Correctly specify the environnement variables in windows (envir in the search bar)
+R : C:\Program Files\R\R-3.3.0
+R_HOME : C:\Program Files\R\R-3.3.0
+R_USER : rlafarguette
+
+#3. Run it
+
+
+#%% R into Python through pipes: http://www.r-bloggers.com/another-way-to-access-r-from-python-pyper/
+import pyper as pr
+
+## Create a R instance with Pyper
+r = pr.R(use_pandas = True)
+
+## Read data on Python
+python_database = pd.read_csv('Global_trade.csv')
+
+## Specify data type to speed up the process
+dtf = {'timestamp':pd.datetime, 'code':str, 'news':str, 'pair':str,
+       'news_type':str, 'country':str} # Other variables are floats
+
+## Precise variables type to speed up the process
+df0 = pd.read_csv(final_dir + '/final_frame_15s_old.csv', encoding='utf-8',
+                  dtype=dtf)
+
+## Pass data from Python to R
+r.assign("rdata",python_database)
+
+## Show data summary
+print(r('summary(rdata)'))
+
+## Load R package
+r('library(betareg)')
+
+## Pass data from R to Python
+pd.DataFrame(r.get('summary(rdata)'))
+
+#%% APPLICATION: use Python and R to download data from Python
+import pyper
+
+## Create a R instance with Pyper
+r = pr.R(use_pandas = True)
+
+## Load Haver package
+r('library(Haver)')
+
+## Function to download data from Haver using an R package
+def Haver_dwn(TICKER="S111NGDP",START= "1990-01-01",= "2015-09-30",FREQ = "a",DATABASE = "G10"):
+    # Generic command
+    haver_cmd = 'output = haver.data(codes="HTICKER", start=as.Date("HSTART", format="%Y-%m-%d"), end=as.Date("HEND", format="%Y-%m-%d"), freq="HFREQ", dat="HDATABASE")'
+    # Replace inside the string the commands with our own function
+    haver_cmd = haver_cmd.replace("HTICKER",str(TICKER)).replace("HSTART",str(START)).replace("HEND",str(END)).replace("HFREQ",str(FREQ)).replace("HDATABASE",str(DATABASE))
+    # Download the data
+    r(haver_cmd)
+    # Identify incorrect codes and assign None type
+    r('if(class(output) == "HaverData"){data = as.data.frame(output); data$year = as.integer(rownames(data))} else {data = substitute()}')
+    # Return data which can be either None or pandas dataframe and clean it on Python
+    frame = r.get('data')
+    # Clean the dataframe if it is one (quite slow but easier to handle) to put it in a long format
+    if isinstance(frame,pd.DataFrame) == True:
+        frame.columns = ["value","year"]; frame["code"] = str(TICKER); frame = frame[["year","code","value"]]
+    else:
+        frame = 'Incorrect Haver code or database'
+    # Return either a clean dataframe or None
+    return(frame)
+
+## Define a function to download Haver from lists
+def Haver_agg(SEASONALITY = "S", CODE = "NGDP", COUNTRYLIST = ["111","112"], START = "1990-01-01", END = "2015-09-30", FREQUENCY = "a", DATABASE= "G10"):
+    codes_list  = [str(SEASONALITY) + str(country) + str(CODE) for country in COUNTRYLIST]
+    data_raw    = {KEY: Haver_dwn(TICKER = KEY ,START= START, END = END,FREQ = FREQUENCY, DATABASE = DATABASE) for KEY in codes_list}
+    data_clean  = {KEY: data_raw[KEY] for KEY in data_raw.keys() if isinstance(data_raw[KEY],pd.DataFrame) == True}
+    return(data_clean)
+
+## Complete a datalist of a list of countries from new index
+def Haver_complete(ORIGINALDICT,ALL_COUNTRIES_LIST,SEASONALITY = "S", CODE = "NGDP", START = "1990-01-01", END = "2015-09-30", FREQUENCY = "a", DATABASE= "G10"):
+    missing_countries = list(set(ALL_COUNTRIES_LIST) - set([ITEM[1:4] for ITEM in ORIGINALDICT.keys()]))
+    complete_pp       = Haver_agg(SEASONALITY = SEASONALITY, CODE = CODE, COUNTRYLIST = missing_countries, START = START, END = END, FREQUENCY = FREQUENCY, DATABASE= DATABASE)
+    ORIGINALDICT.update(complete_pp)
+    return(ORIGINALDICT)
+
+#%% Download the Haver data using list comprehension
+ticker_list = ["S" + str(ITEM) + "NGDP" for ITEM in [111,112,888,138,146,142]] #888 is an incorrect code for testing
+
+raw_data_list = [Haver_dwn(TICKER = ITEM ,START= "1990-01-01",END = "2015-09-30",FREQ = "a",DATABASE = "G10") for ITEM in ticker_list]
+
+clean_data_list = [DATA for DATA in raw_data_list if isinstance(DATA,pd.DataFrame) == True]
+
+finalframe = pd.concat(clean_data_list)
+
+## List of Haver codes for G10 countries (the rest are EMERGE countries)
+G10 = [193,122,124,156,423,128,172,132,134,174,176,178,136,158,137,181,138,196,142,182,184,144,146,112,111]
+
+#+end_src
+
+** Packages Installation
+#+begin_src python
+
+## Manual
+# 1/ Download the .whl package from http://www.lfd.uci.edu/~gohlke/pythonlibs
+# 2/ Save it somewhere. Open a terminal in the folder (shift + right click):
+pip install packagename.whl
+
+## To install via conda
+# Update first the .condarc file with the proxy specification
+
+## Modules update
+import imp                             ## To manage some advanced features for importation
+import haver_functions                 ## Load the module the first time
+imp.reload(haver_functions)            ## Reload it modified on the source
+
+## Add the path to the module
+import sys                             ## Manage the system path
+sys.path.append('J:\\Python_customized_modules')
+#+end_src
+
+** Misc
+
+#+begin_src python
+
+## Interrup Python in Emacs shell
+C-c C-d
+
+## Pandas: why SettingWithCopyWarning, .loc and .iloc, and how to access
+## a single value in a cell
+
+## Bulk indent on Emacs
+C-c < # for left
+C-c > # for right
+
+## http://stackoverflow.com/questions/20625582/how-to-deal-with-this-pandas-warning
+df[df['A'] > 2]['B'] = new_val  # new_val not set in df
+df.loc[df['A'] > 2, 'B'] = new_val
+
+# Very important: for memory allocation reasons, modifying a subset of dataframe modifies the original version !!
+
+da     = pd.DataFrame(np.random.randn(5, 5),columns =  ['a', 'b', 'c', 'd', 'e']) # Random dataframe
+da_sub = da[da < 0] # Subset
+da_sub = da_sub.fillna(100) # Change it
+
+# Extraction: .iloc (based on 0-based index) nicely extracts a list of values, while loc (based on conditions) extract a dataframe
+da.iloc[3]['c']   # Equivalent to da.loc[3,'c']
+da.loc[da.c == min(da.c) ,'c']
+
+# It is possible to get the value from a .loc statement using the numpy function .values, but it will convert the type into numpy !! (not good for dates)
+da.loc[da.c == min(da.c) ,'c'].values[0]
+
+# Note that working with index/mask is much better, because it ultimately gives the possibility to use iloc, if the index is 0-based
+mask = da.index[da.c == min(da.c)]
+da.loc[mask[0],'c'] # Need to feed an integer: feeding an array results in an array !!
+
+# Time measure with Python
+import time
+start_time   = time.time()
+elapsed_time = time.time() - start_time
+
+## Exit command in a console
+input("Press enter to exit ;)")
+
+###############################################################################
+#%% Exit process
+###############################################################################
+exit_msg = 'Job done !'
+print(exit_msg)
+input("Press enter to exit ;)")
+
+m, s = divmod((time.time() - start_time), 60)
+msg = "Spreads dataset generated in {:.0f} minutes and {:.0f} seconds".format(m, s)
+print(msg)
+
+
+
+#+end_src
+
+
+
+
+* Paths
+
+** Relative paths
+#+begin_src python
+
+#%% Paths (defined as relative paths for perfect compatibility)
+from unipath import Path
+current_dir = Path(os.path.dirname(os.path.realpath('__file__')))
+root_dir = current_dir.ancestor(1)
+data_dir = Path(root_dir + '\\Data\\')
+
+#+end_src python
+
+
+* Pandas
+
+#+begin_src python
+
+
+## Improve columns display (pandas options)
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 8)
+pd.set_option('display.width', 100)
+
+## Create empty dataframe
+d_out = pd.DataFrame(index=[str(CURRENCY)], columns=["share_onshore","share_financial_center","share_other_offshore","fx_total_currency"])
+
+## Read excel and skip some rows
+pd.read_excel("mydata.xlsx",sheetname="firstsheet",skiprows=[1,3,5])
+
+## Encoding issues, mostly on windows
+dcables = pd.read_csv(path_22 + 'cablesfinal.csv', encoding = 'latin1')
+
+## Read .out files: need to precise the names because the number of columns is not constant across rows
+df = pd.read_csv(raw_path + "ehd_5p0-20150103.out", header=None, names=["Date","Time","Pair","Num1","Num2","Num3","Num4","Num5","Num6","Num7"])
+
+## Describe the dataset and manipulate the count values (only non-missing)
+dg_missing = dg.describe(); dgt = dg_missing.loc[dg_missing.index == "count"].transpose()
+dg_columns_keep = list(dgt[dgt['count'] > 0].index)
+
+## Access multilevel dataframes
+d["date"] = d.index.get_level_values("date")
+d["date"] = d.index.get_level_values(level=0)
+
+## Resampling
+dw.resample('Q', label='right').mean()
+dmn = dwq.resample('M', label='right') ## Without computing anything
+
+## Resample at the quarterly frequency for every country
+dn = dn.set_index(dn.date_m)
+dng = dn.groupby(['country'])
+dngc = dng.resample('Q', label='right').mean()
+
+## Resample differently on variables
+df.resample('1H').agg({'openbid': 'first', 
+                                 'highbid': 'max', 
+                                 'lowbid': 'min', 
+                                 'closebid': 'last'})
+
+## Recursive merging
+dco = pd.DataFrame(columns=['iso3','year'])
+for DB in countrydata:
+    cols = [x for x in DB.columns if x not in dco.columns or x in ['iso3','year']]
+    dco  = pd.merge(dco, DB[cols], on=["iso3","year"], how='outer', suffixes=['',''])
+
+## Merge on index
+dq = pd.merge(dec, dqd, left_index=True, right_index=True, suffixes=('', '_y'))
+
+## Fast recursiving merging, using reduce (need import functools)
+df_final        = functools.reduce(lambda left,right: pd.merge(left,right,left_index=True,right_index=True), tables_list)
+
+## Equivalent to the clearer but longer formulation
+df_final = tables_list[0]
+for RIGHT_TABLE in tables_list[1:]:
+    df_final = pd.merge(df_final,RIGHT_TABLE,left_index=True,right_index=True)
+
+## Recursive concatenation: just need a list of dataframes ! (concatenate on Python is amazing !!)
+dfinal = pd.concat(bilateral_df.values()) # bilateral_df.values() is a list of the values of a dictionary
+
+## Replace value of a dataframe
+for COUNTRY in f0countries_list:
+    for VARIABLE in variablesnames:
+        value_to_replace = f2.loc[(f2["Country Name"] == COUNTRY) & (f2.Year == "2011"),VARIABLE].values[0] #
+        f2.loc[(f2["Country Name"] == COUNTRY) & (f2.Year == "2012"),VARIABLE] = value_to_replace # The replacement should be done without the attribute "values"
+
+## Merge dataframes on different names
+f3 = pd.merge(f2,nm[["country_short","iso3"]],left_on="Country Name",right_on="country_short")
+
+## Reorganize (STACK) the data from wide to long and manage the labels issue
+c0 = c0.set_index("Year") ## Important to have the right index
+c1 = pd.DataFrame(c0.iloc[:,1:].stack()); c1.columns = ["currency_regime"]
+c1["year"] = c1.index.get_level_values(0) # Access multilevels index
+c1["country_short"] = c1.index.get_level_values(1) # Access multilevels index
+
+## From long to wide on two index
+dlong = dlong.set_index(['Date_end_period', 'Country'])
+dlong['index'] = dlong.index
+dwide = dlong.pivot_table(index = 'index', columns='Variable', values='Value')
+
+## Easy one
+drs.pivot(index='date_m', columns='country', values='r2_1').head()
+
+
+## better (pay attention at the Index )
+dw = dls.reset_index().pivot_table(values='Value', index=['Date','ISO'], columns='Variable')
+dw = dw.reset_index(level=['Date', 'ISO']) # Trick of the index reset
+
+## Need to reset index to have an horizontal and direct stack
+fullrow    = pd.concat([deal_line.reset_index(), quote_line.reset_index()], axis=1)
+
+
+## Recursive merging
+dco = pd.DataFrame(columns=['iso3','year'])
+for DB in countrydata:
+    cols = [x for x in DB.columns if x not in dco.columns or x in ['iso3','year']]
+    dco  = pd.merge(dco, DB[cols], on=["iso3","year"], how='outer', suffixes=['',''])
+
+## Drop na only on one variable
+d = d.dropna(subset=["cable_indirect_fc_first_year"])
+
+## Remove duplicates, either on the full dataframe or on a subset
+d = d.drop_duplicates(['year','iso'])
+
+## Remove duplicated index
+var = var[~var.index.duplicated(keep='first')]
+
+## Apply a function on multiple columns
+db['date'] = db.apply(lambda x: date(int(x['year']),3*int(x['quarter'][-1]),1),
+                      axis=1) + pd.offsets.QuarterEnd()
+
+## Apply a function to every row element
+dpredict_real["estimated_share"] = dpredict_real.linear_combination.map(lambda row: sigmoid(row))
+
+## Apply a function to every cell
+dataframe.applymap
+
+## Add a new row to a dataframe
+# First: create a list with all the values taken on the row (in the right order)
+# Second: add the list at the end as a new row, using len(dt) {Python starts at 0 so len(dt) is former length + 1}
+dt.loc[len(dt)] = row_euroarea
+
+## Repetition of elements
+# Element-wise
+pd.DataFrame(np.repeat(np.array(ds.iso3),len(ds.iso3),axis=0))
+# Circular
+pd.DataFrame(np.tile(np.array(ds.iso3),len(ds.iso3)))
+
+## Sort dataframe (no need to use order)
+df = do.sort_values(by = ["iso3","date"],ascending=[1,1])
+
+## Reorder-reorganize the columns
+frontvar = ["ISIN","Year","Month","sample_weight"]
+othervar = [ITEM for ITEM in dfinal.columns if ITEM not in frontvar]
+dfinal   = dfinal[frontvar + othervar]
+
+## Rename a variable
+d_fx = d_fx.rename(columns = {'rate_surprise':'policy_rate_surprise'})
+
+## Remove rows for which all values are Nan or 0 (method "any")
+df.loc[(df!=0).any(axis=1)]
+dq_final = dq.loc[(pd.isnull(dq_final[numvars]) == False).any(axis=1)]
+
+## Merge dataframes at different frequencies http://stackoverflow.com/questions/27080542/merging-combining-two-dataframes-with-different-frequency-time-series-indexes-in
+#  Need to put index on the right dataframe corresponding to a column on the left dataframe
+d_inv    = d_inv.set_index(['year','iso'])
+dq_joint = dq.join(d_inv,on=['year','iso'], how='outer') # Requires that ['year','iso'] as columns in dq
+
+## Adding metadata (including name) to a dataframe
+http://stackoverflow.com/questions/14688306/adding-meta-information-metadata-to-pandas-dataframe
+
+## Multiple index
+#%% Multi indexed frame in Python to store the var cov matrices
+
+
+dtest = pd.DataFrame([['bar', 'one'], ['bar', 'two'],
+                      ['foo', 'one'], ['foo', 'two']],
+                     columns=['first', 'second'])
+
+
+
+iterables = [['bar', 'baz', 'foo', 'qux'], ['one', 'two']]
+
+multi_index = pd.MultiIndex.from_product(iterables, names=['first', 'second'])
+
+pd.DataFrame(index=multi_index, columns=endog)
+
+# Convert all the undefined types (object) in numeric
+undef = ddf.columns[ddf.dtypes.eq('object')]
+ddf[undef] = ddf[undef].apply(pd.to_numeric, errors='coerce')
+
+
+## Equivalent pandas - SQL
+## http://pandas.pydata.org/pandas-docs/stable/comparison_with_sql.html
+#+end_src
+
+** SQL
+#+begin_src python
+
+#%% Create SQL database with pandas
+import pandas as pd
+import os
+import sqlalchemy as sa
+
+## Initiate the engine
+engine = sa.create_engine(r'sqlite:///d:/lafarguette/EBS/Data/Clean/EBS-2015-Q1.db')
+
+## Gather the data to an SQL database using pandas interface for connecting with SQL
+for FILE in files_list:
+    # Read the file
+    df = pd.read_csv(raw_path + FILE, header=None, names=["date","time","pair","event","side","distance","price","amount","quote_count","total_amount"])
+    # Some cleaning for SQL insertion (need to be on the "right format" so that SQL perfectly recognizes it)
+    df['timestamp'] = pd.to_datetime(df['date'].astype('str') + ' ' + df['time'].astype('str'), format = '%Y/%m/%d %H:%M:%S.%f')
+    df.date         = pd.to_datetime(df['date'])
+    df.pair         = df.pair.map(lambda row: row.replace("/","")) # The symbol / is misleading for SQL
+    df.pair         = df.pair.astype('str')
+    df.event        = df.event.astype('str')
+    df.side         = df.side.astype('float') # Note that integer does not support NaN, therefore we have to put it on float format (more memory consumming)
+    df.distance     = df.distance.astype('float')
+    df.price        = df.price.astype('float')
+    df.amount       = df.amount.astype('float')
+    df.quote_count  = df.quote_count.astype('float')
+    df.total_amount = df.total_amount.astype('float')
+
+    # Save each currency pair into a separate table; if it already exists, append to it (very simple feature to dynamically add tables to a sqlite database !)
+    for PAIR in set(df.pair):
+        columns_of_interest = ['date','timestamp','pair','event','side','distance','price','amount','quote_count','total_amount']
+        # Sort it to be sure that it is very clean before inserting into the SQL (longer time now but faster later on)
+        df_sorted = df[df.pair == PAIR][columns_of_interest].sort(['timestamp'], ascending=[1])
+        df_sorted.to_sql(str(PAIR), engine, flavor='sqlite', if_exists='append')
+
+## Note that EBS-2015-Q1 is the database while str(PAIR) is the table (belonging to the dataset)
+
+##############################################################################################################################################
+#%% Reading SQL with sqlachemy http://solovyov.net/en/2011/basic-sqlalchemy/
+import sqlalchemy as sa
+
+## Initiate the SQL engine (connecting to an sqlite database; if it does not exist, creates it)
+raw_engine   = sa.create_engine(r'sqlite:///d:/lafarguette/EBS/Data/Clean/EBS-2015-Q1.db')
+
+## Initiate the metadata container
+raw_metadata = sa.MetaData(bind = raw_engine, reflect = True)
+
+## Return the full list of tables
+currencies_list = raw_metadata.tables.keys()
+
+## Select one table
+currency_table = raw_metadata.tables[currencies_list[0]] # Extract the table from the metadata
+
+## Conditions
+# Pay attention when expressing the conditions to write them properly
+date_conditions  = (data_table.c.date == sa.bindparam('date'))
+other_conditions = (data_table.c.event == 'D') # Combine SQLAlchemy expressions with parameters passed to read_sql() using sqlalchemy.bindparam()
+
+## SQL expression, selection and conversion to a pandas dataframe
+sql_expression   = sa.select([currency_table]).where(date_conditions & other_conditions)
+df               = pd.read_sql(sql_expression, raw_engine, params={'date': dt.datetime(2015, 1, 2)}) # Only select for a given day
+
+#+end_src
+
+
+* Data example
+
+#+begin_src python
+import statsmodels as sm
+# Nice dataset on US macro quarterly data
+df = sm.datasets.macrodata.load_pandas().data 
+df['date'] = df[['year', 'quarter']].apply(lambda row:
+                                           date(int(row[0]), int(3*row[1]), 1),
+                                           axis=1) + pd.offsets.QuarterEnd()
+df = df.set_index(df['date'])
+
+df['realgdp_yoy'] = df['realgdp'].rolling(4).sum().pct_change(4)
+
+df['y_t'] = df['realgdp_yoy'].copy()
+df['y_fwd_4'] = df['y_t'].shift(-4)
+
+depvar = ['y_t']
+indvars_l = ['y_fwd_4', 'realint', 'tbilrate', 'unemp']
+
+#+end_src python
+
+* Statsmodels
+  Nice dataset on US macro quarterly data
+      df = sm.datasets.macrodata.load_pandas().data 
+
+
+* Variables
+
+** All
+#+begin_src python
+
+## Decribe series and dataset with pandas
+d.iso3.describe()
+
+## Change the type of variable with pandas (double change)
+dfinal.iso  = dfinal.iso.astype('int').astype('str')
+
+## Cut a variable according to some thresholds
+dsb.maturity_group    = pd.cut(dsb.MTY_YEARS_TDY,bins=[0,1,3,5,7,11,31],include_lowest=False)
+
+## Axis convention in pandas
+axis = 0 : means that the sum is done over the column because pandas will sum the rows (axis = 0 represents the rows)
+axis = 1 : means that the sum is done over the row because pandas will sum the columns (axis = 1 represents the columns)
+
+## Variables conversion
+d.dtypes  # Extract all object types
+d[VARIABLE] = d[VARIABLE].astype("float") # Convert into float
+
+## Use the lambda function to operates on the row (here: dates manipulations)
+d['Month_year'] = d['Date'].map(lambda ROW: int(str(ROW.month) + str(ROW.year)))
+## Convert any string into a date format
+d["Date_time"] = d['DATESTR'].map(lambda ROW: datetime.datetime(int(ROW[:4]),int(ROW[4:6]),1)) # Put the first day of the month
+
+## Very elegant way to create a variable based on conditions on two others
+car_df['large'] = [1 if x > 3 and y > 200 else 0 for x, y in zip(car_df['headroom'], car_df['length'])]
+
+## Elif in list comprehension
+dsum['group'] = ['AE Core' if x in ae_core else 'AE other' if x in ae_other else 'EM' if x in em_all else np.nan for x in dsum.country]
+
+## Operate on the row with recursive attributes access
+for ATT in attributes_list:
+    d_res[ATT] = d_res.LEI.map(lambda row: getattr(Bank_load(row),ATT))
+
+### It also works with methods !! (super cool)
+getattr(df, 'head')()
+
+
+## Groupby variables along (potential many variables) and apply a function over it (not only mean available)
+data.groupby(['group_id_1', 'group_id_2'])['variable_of_interest'].mean()
+
+
+## Groupby return a dataframe (use as_index=False)
+dirf_tpv_max = dirf_tpv.groupby(['country','impulse'], as_index=False)['irf'].max()
+
+## Groupby and function
+dmg = dm.groupby(['ISO'])
+dw['cpi_growth_yoy'] = dmg['cpi'].apply(lambda x: (x - x.shift(12))/x.shift(12))
+
+dm['MSCI($)_cap_MA12'] = dmg['MSCI($)_cap'].apply(lambda x: x.rolling(12).mean())
+
+## Check variable type
+isinstance(var, pd.DataFrame) ; isinstance(var, basestring) # For example
+isinstance(wt_2010[KEY],numbers.Number) # Need import numbers as preamble
+
+## Create pivot tables
+### 'values' can be omitted
+table = pivot_table(df, values='D', index=['A', 'B'], columns=['C'], aggfunc=np.sum)
+df2.pivot_table(values='X',rows=['Y','Z'],cols='X',aggfunc='count')
+## Convert a pivot table to a dataframe: http://stackoverflow.com/questions/22774364/how-do-i-convert-a-pandas-pivot-table-to-a-dataframe
+
+
+## Use groupby to count properly the values
+general_count = df[['index','reaction_time']].groupby(['reaction_time']).count()
+specific_count = df[['index','reaction_time','side']].groupby(['reaction_time','side']).count()
+
+## Ifelse or boolean creation directly in pandas
+dcables['b_indirect_connected_financial_centers'] = (dcables['indirect_connected_financial_centers'] > 0).astype('int')
+
+## Interpolation of series
+s['variable'].interpolate(method = 'nearest')
+
+## Fill the missing values forward (from the most recent available)
+df.fillna(method='ffill')
+
+## Fill the missing values backward (from the immediate future)
+df.fillna(method='bfill')
+
+## Create a lag variable of a series
+s.shift()   # Lag order 1
+s.shift(2)  # Lag order 2
+
+## Compute log returns per country
+df[df.iso3 == COUNTRY]['fx_logreturns'] = np.log(df[df.iso3 == COUNTRY].fx_rate) - np.log(df[df.iso3 == COUNTRY].fx_rate.shift(1))
+
+## Tabulate a serie by factors
+df.Currency.value_counts()
+
+## Eval variables from labels
+a,b,c,d = 1,2,3,4
+dict((name,eval(name)) for name in ['a','b','c','d'] )
+
+## Count frequency and store as a dictionary
+{x:str_list.count(x) for x in set(str_list)}
+
+## Most frequent value in a variable
+def most_frequent(variable):
+    cross_tab = pd.DataFrame(pd.crosstab(df.country, df[variable]))
+    ctmax = pd.DataFrame(cross_tab.idxmax(axis=1), columns=['maxval'])
+    dict_res = dict(zip(ctmax.index, ctmax.maxval))
+    return(dict_res)
+
+
+## Save to Excel
+
+writer = pd.ExcelWriter(pca_exp + 'PCA_FSI_TPV.xlsx')
+fsi_fin.to_excel(writer,'FSI')
+TPV_fin.to_excel(writer,'TPV')
+writer.save()
+
+
+
+#+end_src
+
+
+** Missing values
+#+begin_src python
+
+## Handle missing values properly with pandas dataframes
+df.dropna()              # Drop all rows that have any NaN values
+df.dropna(how='all')     # Drop only if ALL columns are NaN
+df.dropna(thresh=2)      # Drop row if it does not have at least two values that are **not** NaN
+df.dropna(subset=[1])    # Drop only if NaN in specific column (as asked in the question)
+
+## Check if nan for a series
+dn = df[pd.isnull(df["% Weight"]) == True]
+
+## Check if nan for a variable
+import math
+math.isnan(x)
+
+## Convert the numeric to nan
+num_columns = [x for x in di.columns if x not in ['date', 'Descriptor'] ]
+di[num_columns] = di[num_columns].apply(pd.to_numeric, args=('coerce',))
+
+
+#+end_src
+
+
+** Rounding
+#+begin_src python
+
+## Round at the dataframe level
+dpiv_median = dpiv_median.round({'columnname':2})
+
+## Cut a variable according to some thresholds
+df['var_cut']= pd.cut(df.var,bins=[0,1,3,5,7,11,31],include_lowest=False)
+
+
+
+## Round up and down functions at the closest VALUE
+import math
+
+def rounddown(x,VALUE):
+    return int(math.floor(x / int(VALUE))) * int(VALUE)
+
+
+def roundup(x,VALUE):
+    return int(math.ceil(x / int(VALUE))) * int(VALUE)
+
+#+end_src
+
+
+
+
+
+** Create variables on the fly
+#+begin_src python
+[dd, df] = [pd.ExcelFile(raw_dir + D + ".xlsx") for D in dataset_list]
+
+#+end_src python
+
+
+** Pandas series
+#+begin_src python
+
+## Merge series on their index:
+pd.concat([list_of_pandas_series], axis=1)
+
+#+end_src python
+
+
+* Bootstrap
+
+** Sampling with replacement
+
+ #+begin_src python
+ ## Variables
+ fevd_variables = ['fevd_max_tpv', 'fevd_max_world_fci', 'fevd_max_policyrate']
+
+ ## Number of replications
+ num_reps = 10000
+
+ ## Fix the seed (randomly the first time, but then constant)
+ np.random.seed(1985)
+
+ ## Data frame to store the results
+ dfevd_mean = pd.DataFrame(np.nan,columns=fevd_variables,index=range(num_reps))
+
+ for var in fevd_variables:
+     ## Replicate with the same size bootstrap
+     replication = [np.random.choice(df[var], len(df), replace=True)
+                    for _ in range(num_reps)]
+     ## Compute the mean each time
+     dfevd_mean[var] = [np.mean(REP) for REP in replication]
+
+
+ ###############################################################################
+ #%% Extract the boostrap quantities of interest each time
+ ###############################################################################
+ bootstrap_statistics = ['mean','lower_ci','upper_ci']
+
+ dboot_stats = pd.DataFrame(np.nan,columns=fevd_variables,
+                            index=bootstrap_statistics)
+
+ for var in fevd_variables:
+     dboot_stats.loc['mean', var] = dfevd_mean[var].mean()
+     dboot_stats.loc['lower_ci', var] = dfevd_mean[var].quantile(0.025)
+     dboot_stats.loc['upper_ci', var] = dfevd_mean[var].quantile(0.975)
+
+
+ #+end_src python
+
+
+* Tuples and multiindex
+
+** Select only one element of the multi-index
+#+begin_src python
+[x[0] for x in d0.index]
+
+## Check the type or class of an object, using modules class
+isinstance(d0.index, pd.indexes.multi.MultiIndex) == True
+
+#+end_src python
+
+
+* List
+#+begin_src python
+
+# Create a list with n elements
+mylist =  [None]*len(d)
+
+# List comprehension
+[function(ITEM) for ITEM in mylist]
+
+# Silent run in list comprehension: use _
+np.array([np.random.choice(df.var, len(df), replace=True) for _ in range(1000)])
+
+# Is in the list
+[mylist0.isin(mylist1)]
+controlsfinal_short = controlsfinal[controlsfinal.iso3.isin(finaliso3) & (controlsfinal.year.isin(finalyears))]
+
+# String in the list
+some_list = ['abc-123', 'def-456', 'ghi-789', 'abc-456']
+if any("abc" in s for s in some_list): print('yes')
+
+# Item in item in list
+if any("M" in D for D in dc.Date): dc['Frequency'] = "Monthly"
+
+# Multiple conditions on string and on inclusion
+turnover_variables   = [ITEM for ITEM in d.columns if (("turnover_" in ITEM) & (ITEM not in ["turnover_other","turnover_residual","turnover_total"]))]
+
+# Is in the list but not in another
+variablesnames = [ITEM for ITEM in f0.columns if ITEM not in ["Country Name","Year"]]
+
+# Change one element in list
+f3labels= ["year" if ITEM == "Year" else ITEM for ITEM in f3.columns]
+
+# In and not in, list comprehension
+cols = [x for x in DB.columns if x not in dco.columns or x in ['iso3','year']]
+
+# Use if/else in list comprehension
+colors_set = ["red" if YEAR < 1995 else "blue" for YEAR in start_time]
+
+# Use multiple if/*else in list comprehension
+colors_set    = ["red" if YEAR < 1995 else "blue" if ((YEAR > 1994) & (YEAR < 2001)) else "green" for YEAR in start_time]
+
+# Substract two lists using list comprehension
+columns_to_interpolate = [COLUMN for COLUMN in  d_final_4 if COLUMN not in ['iso3','date','weekday']]
+
+# List comprehension + ternary operator
+[dict_currencies_countries[dict_turnover_currencies[ITEM]] if ITEM in day_turnover else ITEM for ITEM in day.columns]
+
+# List comprehension over 2 lists (any lists works, ZIP will stop at the shortest one)
+[(x,y) for x,y in zip(range(4),["a","b","c","d"])]
+
+# List comprehension over 2 lists, using the longest list and recycling the other
+from intertools import zip_longest
+[(x,y) for x,y in zip_longest(range(2),["a","b","c","d"],fillvalue=2)] # The fillvalue determines the value for the shortest list
+
+# List comprehension over a list and the index of the list : enumerate
+[(x,y) for (x,y) in enumerate(["a","b","c","d"])]
+
+# Iterate over two lists and their indices (http://www.saltycrane.com/blog/2008/04/how-to-use-pythons-enumerate-and-zip-to/)
+## Note that using itertools functions are faster than the original zip and enumerate
+alist = ['a1', 'a2', 'a3']; blist = ['b1', 'b2', 'b3']
+for i, (a, b) in enumerate(zip(alist, blist)):
+    print(i, a, b)
+
+## Remove elements if word contains certain string
+columns_interest   = [COLUMN for COLUMN in of.columns if not any(word in COLUMN for word in forbidden_list)]
+
+## Double list comprehension (equivalent to a double loop)
+a = [1,2,3]; b = [4,5,6]
+[(x,y) for x in a for y in b]
+
+## Double list comprehension list in li
+soe_beta = [X for X in beta_cols for Y in soe if Y in X]
+
+# Use mapping in list comprehension
+l = [1, 2, 3, 4, 5]
+result_map = {1: 'yes', 2: 'no'}
+[result_map[x] if x in result_map else 'idle' for x in l]
+
+# Flatten a nested list
+[item for sublist in nestedlist for item in sublist]
+
+# Remove one element in the list
+newcols = list(d0.columns).remove("grrates")
+
+# Remove one element in the list, if it exists
+while thing in some_list: some_list.remove(thing)
+
+# Get index from one list
+list(var_columns).index('event')
+
+# Retrieve multiple index from list
+deal_indices     = [i for i, x in enumerate(deal_int) if x == 'value']
+
+## Cut a long_list into chunks
+def sublist_chunks(long_list, n):
+    return([long_list[i:i + n]  for i in range(0, len(long_list), n)])
+
+
+#+end_src
+
+
+* Dictionaries
+#+begin_src python
+
+## Create a dictionary from two variables
+dictionary = dict(zip(keys, values))
+
+## Convert a dictionary into a pandas dataframe
+df = pd.DataFrame(pd.Series(first_year_cable_fc_ind, name = 'name_var'))
+df["iso3"] = df.index
+
+## Dictionary comprehension
+new_dict = {key: float(key) for key in mylist}
+
+## Another type of comprehension
+a,b,c,d = 1,2,3,4
+dict( (name,eval(name)) for name in ['a','b','c','d'] )
+
+## Operation on 2 dictionaries, using the same keys
+new_dict = {k: float(d1[k])*d2[k] for k in (d1.keys() & d2.keys())}
+
+## Convert 2 pandas columns into a dictionary
+trace_dict = dt.set_index("ISIN")["Trace ticker"].to_dict()
+
+## Update a dictionary with another one (pay attention to have different keys)
+dico1.update(dico2)
+
+## Sort the dictionary using list compression (x[0] to sort on keys)
+sorted(mydict.items(), key=lambda x:x[1], reverse=True)[0:99]
+
+## To get only the first keys (y[1] for the first values)
+[y[0] for y in sorted(my_dict.items(), key=lambda x: x[1], reverse=True)]
+
+## Convert a list of dictionaries into a dataframe
+pd.DataFrame([dico1, dico2, dico3]).transpose()
+
+## Invert a dictionary (values as keys, keys as values)
+invert_dict = {val: key for key, val in normal_dict.items()}
+
+## Sum a list of dictionaries per values
+dico_list = [Bank_load(LEI).outside_exp_dict for LEI in LEI_list]
+
+single_exp_dict = {}
+for DICO in dico_list:
+    for key, value in DICO.items():
+        if key in single_exp_dict.keys():
+            single_exp_dict[key] = value + single_exp_dict[key]
+        else:
+            single_exp_dict[key] = value
+
+### Create a dictionary of lists
+country_LEI_dict = {key: list() for key in countries_list}
+
+#+end_src python
+
+
+* Namedtuple
+#+begin_src python
+
+
+## Create  and Load  a named  tuple using  iterable (easiest)  
+Test =  namedtuple('Test', ['bidule','chouette'])
+
+# With dict : ** (need to unzip basically)
+tdict = {'bidule': 'a', 'chouette': 'b'} 
+test = Test(**tdict) 
+print(test.bidule)
+
+# With list : * 
+test2 = Test(*['oui', 'non'])
+print(test2.bidule)
+
+
+## Tuple instantiation (create a class basically)
+Colors = namedtuple('Colors','red green blue petitpois')
+
+## Simple example
+# A letter dictionary 
+letters_dict = {'a': 1, 'b': 2, 'c':3}
+letters_dict['a']
+
+# A letter named tuple
+Letters = namedtuple('Letters', ['a', 'b', 'c'])
+letters_nt = Letters(1,2,3)
+letters_nt.a
+getattr(letters_nt,'a')
+
+## Creation from an iterable
+letters_ntl = Letters._make([1,2,3]) 
+
+## Creation with default values
+fields = ('val', 'left', 'right')
+Node = namedtuple('Node', fields, defaults=(None,) * len(fields))
+Node()
+Node(val=None, left=None, right=None)
+
+#### Equivalent of a dictionary of dictionaries in namedttuple
+## Note that it can be simpler to do a class directly
+https://stackoverflow.com/questions/43921240/pythonic-way-to-convert-dictionary-to-namedtuple-or-another-hashable-dict-like
+
+year_keys = ['year1', 'year2', 'year3']
+month_keys = ['january', 'february', 'march']
+values = ['j', 'f', 'm']
+
+## Nested dictionary
+nested_dict = {y:{m:values} for y in year_keys for m in month_keys} 
+nested_dict['year1']['march']
+
+## Namedtuple (immutable)
+MonthSeq =namedtuple('MonthSeq', month_keys)
+YearSeq = namedtuple('YearSeq', year_keys)
+
+nested_tuple = YearSeq(*[MonthSeq(*values) for m in month_keys])
+
+nested_tuple.year1.march
+
+## Another example of nested namedtuple
+Position = namedtuple('Position', ['x', 'y'])
+Token = namedtuple('Token', ['key', 'value', 'position'])
+t = Token('ABC', 'DEF', Position(1, 2))
+t.position.x
+
+## Sort a list of namedtuple by attributes
+sorted(agg_series_l, key=lambda x: x.num_vars, reverse=True)
+
+#+end_src python
+
+
+
+* String
+#+begin_src python
+
+## repr and eval: return the name of an object or evaluate it
+repr(my_object) = "my_object"
+eval("my_object") = my_object
+
+## Capitalize/minimilize letter in list comprehension
+countries_smallnames = [ITEM.capitalize() for ITEM in c0.columns] # Only the first letter of the full expression
+countries_smallnames = [ITEM.title() for ITEM in c0.columns] # Each first letter of each word
+d.columns = [str(ITEM).lower() for ITEM in d.columns] # consider every variable in lowercase
+
+## Split a string into different parts
+countries_list = set([COUNTRY.split('_',1)[0] for COUNTRY in columns_interest])
+
+## Replace string in a pandas column
+df.pair         = df.pair.str.replace('/', '')
+
+## Multiple string replacement
+for r in (("ene", "jan"), ("ago", "aug")):
+    word = word.replace(*r)
+
+
+## Convert a string normally
+str(4)
+
+## Convert a string literally: look at the difference between repr() and str() for dates for example
+import datetime as dt
+repr(dt.datetime(2015,1,1))
+str(dt.datetime(2015,1,1))
+
+#+end_src
+
+
+* Floating points
+
+Check first answer here: https://stackoverflow.com/questions/477486/how-to-use-a-decimal-range-step-value
+
+
+* Dates and time
+#+begin_src python
+
+#%% DATES MANIPULATIONS
+df['Date']     = pd.to_datetime(df['Date'])
+df['year']     = pd.DatetimeIndex(df['Date']).year.astype('str')
+df['quarter']  = df.year + '-' + pd.DatetimeIndex(df['Date']).quarter.astype('str')
+df['month']    = df.year + '-' + pd.DatetimeIndex(df['Date']).month.astype('str')
+df['datetime'] = df.to_datetime(df['date'].astype('str') + ' ' + df['time'].astype('str'), format = '%Y/%m/%d %H:%M:%S.%f')
+df['timestamp'] = pd.to_datetime(df['timestamp'], format = '%Y-%m-%d %H:%M:%S.%f')
+
+## Manipulating dates, using apply on two (or more columns) with a lambda function
+db['date'] = db.apply(lambda x: date(int(x['year']),3*int(x['quarter'][-1]),1),
+                      axis=1) + pd.offsets.QuarterEnd()
+
+## End of dates, end of quarter
+df0['date'] = pd.to_datetime(df0['date']) + pd.offsets.QuarterEnd()
+
+## Generate all the weekdays between 2 dates
+import datetime as dt
+sdate    = dt.date(2015, 1, 2) # Remove the first of January which is very particular
+edate    = dt.date(2015, 3, 31)
+alldays  = (sdate + dt.timedelta(days=i) for i in range((edate - sdate).days+1))
+weekdays = [DAY for DAY in alldays if DAY.weekday() not in (5, 6)]
+
+## Add or substract months, days, etc.
+from dateutil.relativedelta import relativedelta
+datetime.datetime(2015,1,31) - relativedelta(months=36)
+
+## Generate a frame between two dates, at a given frequency
+pd.date_range(start=min(dm.index), end=max(dm.index), freq='M')
+pd.date_range(start=min(dm.index), end=max(dm.index), freq='MS') # beginning of month
+
+## Convert a timedelta into seconds
+df['reaction_time'] = (df.timestamp - df.matching_timestamp) / np.timedelta64(1, 's')
+
+## Convert a timedelta into days
+(df.timestamp - df.matching_timestamp) / np.timedelta64(1, 'D')
+
+## Create a timestamp Year, Month, Day, Hour, Minute, Second
+truc = dt.datetime(2015,1,6,15,0,0) ; print(truc)
+
+## Format on date + time (also useful for rounding)
+### At the microsecond
+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+### At the second
+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+### At the minute
+datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+
+## Format only on time (also useful for rounding)
+### At the microsecond
+datetime.datetime.now().strftime('%H:%M:%S.%f')
+### At the second
+datetime.datetime.now().strftime('%H:%M:%S')
+### At the minute
+datetime.datetime.now().strftime('%H:%M')
+
+## Create a time variable from a date variable
+dr.loc[:,'time'] = dr.loc[:,'timestamp'].dt.time
+
+
+### To format an entire series (using lambda function)
+dq1['minute'] = dq1['timestamp'].map(lambda ROW: ROW.strftime('%H:%M'))
+
+#+end_src
+
+
+* Numpy
+
+#+begin_src python
+  On slicing and dimensions issues, check here: https://stackoverflow.com/questions/3551242/numpy-index-slice-without-losing-dimension-information
+
+
+  Remove dimensional elements in numpy array: np.squeeze(self.pdf_array)
+
+
+# Repetition and broadcast: difference tile and repeat
+a = np.array([[1,2,3], [4,5,6]])
+np.tile(a, (3,1))
+np.repeat(a, repeats=[3], axis=0)
+
+#+end_src python
+ 
+
+* Exceptions
+#+begin_src python
+# Customize the exception behaviour    
+except Exception as exc:
+    exc.args += (country, horizon, cutoff)
+    print(exc.args)
+
+except Exception as exc: # If error, print it and move on
+    print('Error in {}: {}'.format(fdate, exc.args))
+
+
+#+end_src python
+
+
+* Pickles
+#+begin_src python
+## Dump and load objects in a directory
+partition_pickles = os.path.join(gv.partitions_dir, 'partitions')
+
+a = {'hello': 'world'}
+
+with open(partition_pickles, 'wb') as handle:
+    pickle.dump(a, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open(partition_pickles, 'rb') as handle:
+    b = pickle.load(handle)
+
+print(a == b)
+
+
+# Save multiple objects in once (convenient)
+for obj_name in serial_l:
+    # Design the path
+    pickle_path = os.path.join(gv.serial_dir, obj_name)
+
+    # Dump (serialized savings)
+    with open(pickle_path, 'rb') as handle:
+        # Trick to dynamically instance objects from string
+        # Put them in the globals
+        globals()[obj_name] = pickle.load(handle) 
+
+
+#+end_src python
+
+
+* Eval/Repr
+
+#+begin_src python
+## repr and eval: return the name of an object or evaluate it
+repr(my_object) = "my_object"
+eval("my_object") = my_object
+
+# Save multiple objects in once (convenient)
+for obj_name in serial_l:
+    # Design the path
+    pickle_path = os.path.join(gv.serial_dir, obj_name)
+
+    # Dump (serialized savings)
+    with open(pickle_path, 'rb') as handle:
+        # Trick to dynamically instance objects from string
+        # Put them in the globals
+        globals()[obj_name] = pickle.load(handle) 
+
+
+
+#+end_src python
+
+
+* Plotting
+
+** Matplotlib
+#+begin_src python
+import matplotlib.dates as mdates
+
+## Standard simple chart
+fig = plt.figure()
+
+ax = fig.add_subplot(111)
+ax.axhline(y=n, label='Old')
+ax.plot([5, 6, 7, 8], [100, 110, 115, 150], 'ro', label='New')
+
+ax.set_xlabel('Example x')
+ax.set_ylabel('Example y')
+ax.set_title('Example Title')
+
+ax.legend()
+ax.set_xticks([0,10,50,150])
+ax.set_yticks([0,10,50,150])
+
+plt.show()
+
+
+## Standard chart with dates
+f, ax = plt.subplots()
+ax.plot(d_r2_factors['r2_1'])
+ax.plot(d_r2_factors['r2_3'])
+ax.set_ylim(0, 1)
+ax.legend(loc=2,prop={'size':12})
+ax.xaxis.set_major_locator(mdates.YearLocator(1, month=1, day=1))
+plt.title('Rolling R2 on the factors from the factor model 5 years window')
+plt.show()
+
+## Set the dates limit and format
+ax1.set_xlim([datetime.date(1989, 1, 1), datetime.date(2017, 12, 31)])
+ax2.set_xlim([datetime.date(1989, 1, 1), datetime.date(2017, 12, 31)])
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y'))
+ax2.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y'))
+
+## Tick every year, beginning of the year
+f, ax = plt.subplots()
+ax.plot(d_r2_factors)
+ax.set_ylim(0, 1)
+ax.xaxis.set_major_locator(mdates.YearLocator(1, month=1, day=1))
+plt.show()
+
+#rotates the tick labels automatically
+fig.autofmt_xdate()
+
+
+# multiple charts
+plt.close() ## Needed to avoid past plots to appear
+fig, axes = plt.subplots(nrows=3, ncols=1, sharex=False, sharey=False)
+pd.pivot_table(droll, values='r2_1', index=['date_m'], columns=['group'], aggfunc=np.median).plot(ax=axes[0])
+pd.pivot_table(droll, values='r2_1', index=['date_m'], columns=['peg'], aggfunc=np.median).plot(ax=axes[1])
+pd.pivot_table(droll, values='r2_1', index=['date_m'], columns=['open'], aggfunc=np.median).plot(ax=axes[2])
+axes[0].legend(loc=2,prop={'size':9})
+axes[1].legend(loc=2,prop={'size':9})
+axes[2].legend(loc=2,prop={'size':9})
+plt.suptitle('Median R2 of the 1-factor model regression over time, per group of countries', size=12)
+plt.show()
+
+
+# Manage legend: unique legend each time
+handles, labels = plt.gca().get_legend_handles_labels()
+by_label = OrderedDict(zip(labels, handles))
+plt.legend(by_label.values(), by_label.keys())
+
+
+#+end_src python
+
+** Arrange dates in pandas or matplotlib plotting
+#+begin_src python
+# Plot
+fig, axes = plt.subplots()
+dnyq.plot(kind='bar', stacked=True, ax=axes)
+
+# Set cusom format of dates
+ticklabels = dnyq.index.strftime('%Y-%m')
+axes.xaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
+
+#show only each xth label, another are not visible
+spacing = 3
+visible = axes.xaxis.get_ticklabels()[::spacing]
+for label in axes.xaxis.get_ticklabels():
+    if label not in visible:
+        label.set_visible(False)
+
+plt.show()
+plt.close('all')
+
+#+end_src python
+
+** Subplots
+#+begin_src python
+fig, ax = plt.subplots(nrows=2, ncols=2)
+
+x = np.random.sample(15)
+y = np.random.sample(15)
+
+for row in ax:
+    for col in row:
+        col.plot(x, y)
+
+plt.show()
+
+## Another approach
+data = np.random.sample(100)
+
+def plot_something(data, ax=None, **kwargs):
+    ax = ax or plt.gca() ## Or very convenient for non-existing objects
+    # Do some cool data transformations...
+    ax.plot(data, **kwargs)
+    return(ax) 
+
+
+fig, axes = plt.subplots(2,2)
+plot_something(data, axes[0,0], color='blue')
+plot_something(data, axes[0,1], color='red')
+plot_something(data, axes[1,0], color='green')
+plot_something(data, axes[1,1], color='black')
+plt.show()
+
+#### Works for me
+## Pay attention to plt.sca() 
+
+
+#%% Define a single plot
+def single_coeff_plot(coeff_frame, variable, ax):
+    
+    """ Plot the quantile coefficients for a given variable """
+    
+    ## Initialization (depends if ax has been supplied or not)
+    plt.sca(ax)
+    
+    ## Clean the frame
+    dcoeffc = coeff_frame.loc[variable,:].copy()
+    dcoeffc['tau'] = dcoeffc['tau'].apply(round_if_num).copy()
+    dcoeffc = dcoeffc.set_index(dcoeffc['tau'])
+
+    ## Manage the index with "mean" next to the median
+    qlist = list(dcoeffc['tau'])
+    qlist_num = [x for x in qlist if x!= 'mean']
+
+    med_index = qlist_num.index('0.5')
+    qlist_num.insert(med_index, 'mean')
+    dcoeffc = dcoeffc.reindex(qlist_num).copy()
+
+    ## Compute the error terms
+    dcoeffc['errors'] = (dcoeffc['upper'] - dcoeffc['lower'])/2
+
+    ## Barplot with error terms
+    dcoeffc['coeff'].plot.bar(color='blue',
+                              yerr=dcoeffc.errors, axes=ax)
+    
+    ## Some fine-tuning
+    ax.axhline(y=0, c='black', linewidth=0.7)
+    ax.set_title('{0}'.format(variable), fontsize=25, y=1.05)
+    ax.yaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
+    ax.set_xlabel('')
+
+    #ax.plot()
+
+
+#%% Plot the variables    
+variable_l = sorted(set(coeff_frame.index))
+fig, axes = plt.subplots(len(variable_l), figsize=(10,10))
+for v_index, variable in enumerate(variable_l):
+    single_coeff_plot(coeff_frame, variable, ax=axes[v_index])
+plt.show()
+
+
+#+end_src python
+
+** Vizualisation with Pandas
+http://pandas.pydata.org/pandas-docs/stable/visualization.html
+
+** Plotly
+from plotly.graph_objs import Bar, Scatter, Figure, Layout
+
+** Ipython
+
+*** Change the working directory
+
+$> jupyter notebook --generate-config
+to initialize a profile with the default configuration file.
+Secondly, in file jupyter_config.py, uncomment and edit this line:
+
+# c.NotebookApp.notebook_dir = 'D:\\Documents\\Desktop'
+changing D:\\Documents\\Desktop to whatever path you like.
+
+
+
+*** Install extensions
+
+If you are using Jupyter/IPython 4:
+1. Clone the repo (https://github.com/ipython-contrib/jupyter_contrib_nbextensions/)
+2. Call python setup.py install
+3. Enjoy :-)
+
+
+Then to activate them:
+- Copy the nbextensions folder from .jupyter to .ipython on the username folder
+- pip install jupyter_nbextensions_configurator
+- jupyter nbextensions_configurator enable --user
+
+- Can control them directly on a notebook per notebook basis !!
+
+** Bokeh plotting
+#+begin_src python
+
+## Gantt plot
+from bokeh.plotting import figure, show, output_file, vplot, HeatMap
+from bokeh.models import FixedTicker
+output_file("Gantt-plot.html", title="Gantt-plot, first cable")
+
+gp = figure(title="First submarine connection to a financial center", tools="resize,save", y_range= ylabels, x_range=[1988,2014])
+gp.segment(start_time, ylabels, end_time, ylabels, line_width=2, line_color="green")
+# Options for ticks: http://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#tick-locations
+gp.xaxis[0].ticker=FixedTicker(ticks=[ITEM for ITEM in range(1989,2014,1)])
+gp.circle(start_time, ylabels, size=10, fill_color="orange", line_color="green", line_width=3)
+gp.xaxis.axis_label = "Year"
+gp.yaxis.axis_label = "Connected (directly or indirectly to a financial center)"
+show(gp)
+
+## HEATMAP
+# CONDITIONS FOR THE HEATMAP : HAVE BOTH THE INDEX AND THE COLUMNS TYPE IN STR
+from bokeh.charts import HeatMap, output_file, show
+from bokeh.palettes import YlOrRd9 as palette_color # Need to specify the number in the palette
+palette_mod = palette_color[::-1] # Invert the order so that the darker the higher
+output_file("FX-heatmap.html", title="FX heatmap, FX offshore share")
+hm = HeatMap(share_pivoted_nna2, title="FX offshore share heatmap for selected currency (the darker the higher the offshore share)",palette=palette_mod, tools="resize,save")
+show(hm)
+
+#+end_src
+
+
+
+
+
+
+
+
+* Custom functions
+
+** Regressions
+#+begin_src python
+###############################################################################
+#%% Functions
+###############################################################################
+def formula_generator(dependent, inter_left, inter_right, controls):
+    """
+    Create a function to generate formulas
+     - Please input dependent as string and independent as a list
+    """
+    inter_formula = '{} * {}'.format(inter_left, inter_right)
+
+    controls_sum = controls[0]
+    for V in controls[1:]: controls_sum += ' + {}'.format(V)
+
+    formula = '{} ~ {} + {}'.format(dependent, inter_formula, controls_sum)
+    return(formula)
+
+
+def star_function(beta, pvalue):
+    """ Return a string with beta and its significance stars, if any"""
+    signif_dict = {0.1:'*', 0.05:'**', 0.01:'***'}
+    stars = ''
+    for X in signif_dict.keys():
+        if pvalue <= X: stars = signif_dict[X]
+        else: pass
+    return('{}{}'.format(beta,stars))
+#+end_src
+
+
+* Work with R
+
+** Basics
+#+begin_src python
+## Work with R
+import rpy2
+import rpy2.robjects as robjects
+
+pi = robjects.r['pi']
+
+## Create a function
+robjects.r(''' f <- function(r) {2 * pi * r} ''')
+robjects.r('''f(3)''')
+
+# Convert the object into a Python one
+r_f = robjects.r['f']
+
+## Able to call it from Python directly
+res = r_f(3)
+#+end_src python
+
+
+* Export
+
+** To excel
+
+*** Standard
+#+begin_src python
+writer = pd.ExcelWriter(var_dir + 'Countries VAR estimates.xlsx')
+pd.DataFrame().to_excel(writer,'Raw Data >>', index=False)
+cross_tab.to_excel(writer,'trilemma categories', index=True)
+writer.save()
+#+end_src python
+
+*** Advanced with workbook customization
+writer = pd.ExcelWriter(var_dir + 'Countries VAR estimates.xlsx')
+workbook  = writer.book
+
+sum_irf_world_mean.to_excel(writer, 'Boxes - mean values', index=True, startcol=3, startrow=4)
+wkmean = writer.sheets['Boxes - mean values']
+wkmean.insert_textbox('D3', 'IRF: World FCI', txt_opt)
+
+
+
+
+* Work with word
+
+
+#+begin_src python
+
+import docx   ## Pay attention: need to install python-docx and not docx !!
+
+#+end_src python
+
+
+* Coding music
+
+- Vitalic
+- Boris Brejcha Night Owl
+- Boris Brejcha The Mad Doctor
+- Woralks Salzburg/Souvenir
+- Above and Beyond
+- Laurent Garnier the Man with the Red Face
+- Amelie Lens
+- Petit Biscuit
+- Kavinsky
+- Rammstein Links 123
+- Clubbed to death (Matrix theme song)
+- Requiem for a dream

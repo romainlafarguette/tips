@@ -1,0 +1,54 @@
+#+TITLE:     Tips for Github
+#+AUTHOR:    Romain Lafarguette
+#+EMAIL:     rlafarguette@imf.org
+#+DATE:      Time-stamp: "2019-12-10 16:22:15 RLafarguette"
+
+* Software
+  1. At the Fund: Use Portable Git to access Git 
+  2. Use git-cmd.exe 
+  3. From the terminal, go to a given repo (use cd.. and dir)
+     
+* Initialize Git repo
+git init [project-name]
+
+
+* Check the status of a repo
+git status
+
+* Add files ("stage" or "index" them before commit)
+
+** Single file
+git add [file]
+
+** File type
+git add *.py
+
+** All files 
+git add - A
+
+
+* Commit 
+git commit -m "This is my commit comment!"
+
+* Push on Github
+
+** Regular push
+git push -u origin master
+
+** First time, add origin
+git remote add origin https://github.com/cubeton/mynewrepository.git
+
+** Push a branch on Github
+git push origin my-new-branch
+
+
+* Pull from Github (an already existing project, else clone)
+git pull origin master
+
+* Create a branch
+git branch [branch-name]
+
+
+
+
+
