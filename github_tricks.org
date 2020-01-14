@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2019-12-10 16:22:15 RLafarguette"
+#+DATE:      Time-stamp: "2019-12-10 16:58:17 RLafarguette"
 
 * Software
   1. At the Fund: Use Portable Git to access Git 
@@ -10,7 +10,6 @@
      
 * Initialize Git repo
 git init [project-name]
-
 
 * Check the status of a repo
 git status
@@ -24,8 +23,10 @@ git add [file]
 git add *.py
 
 ** All files 
-git add - A
+git add -A
 
+* Unstage file
+git rm -- [file]
 
 * Commit 
 git commit -m "This is my commit comment!"
