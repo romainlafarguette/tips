@@ -1,0 +1,265 @@
+#+TITLE: Orgmode Tricks
+#+AUTHOR: Romain Lafarguette
+#+EMAIL: rlfarguette@imf.org
+#+DATE: Monday January 1 2020
+#+STARTUP: showall
+
+* Commands and installation
+
+** Installation
+- Need to have pandoc installed (https://pandoc.org/installing.html)
+- Also download pandoc-crossref which should be either in the path or in the
+  same folder as the file
+  (https://github.com/lierdakil/pandoc-crossref/releases)
+- Then open a windows terminal in the same folder as the .org (or .md file)
+  and type the following commands, (assuming the file is called
+  orgmode-tricks.org). Change the extensions are needed
+
+
+** Commands
+
+*** With cross-reference, bibliography and default style 
+pandoc -F pandoc-citeproc --bibliography biblio.bib orgmode-file.org -o output.docx
+
+
+*** With cross-references, bibliography and bibliographystyle (csl file in folder)
+pandoc -F pandoc-crossref -F pandoc-citeproc --bibliography biblio.bib --csl chicago-fullnote-bibliography.csl orgmode-file.org -o output.docx
+
+
+*** With cross-references no bibliography:
+pandoc -F pandoc-crossref -F pandoc-citeproc orgmode-file.org -o output.docx
+
+*** To use a Word template to generate another Word document
+pandoc --reference-doc template.docx -o output.docx orgmode-file.org
+
+
+** Some references on orgmode
+- Reference card: https://orgmode.org/worg/orgcard.html
+- General: https://karl-voit.at/2017/09/23/orgmode-as-markup-only/
+- http://ehneilsen.net/notebook/orgExamples/org-examples.html#sec-10
+- http://lierdakil.github.io/pandoc-crossref/
+- For installation https://stackoverflow.com/questions/34213100/how-to-install-pandoc-for-windows
+- Pandoc Demos: https://pandoc.org/demos.html
+- Literate programming : http://lierdakil.github.io/pandoc-crossref/demo/output.html
+
+
+* Basic syntax
+Paragraphs are separated by at least one empty line.
+
+Available fonts style:
+- *bold*      
+- /italic/  
+-_underlined_
+- =code=
+- ~verbatim~
+- +strikethrough+
+
+
+[[http://Karl-Voit.at][Link description]] [[link in html][]]
+
+http://Karl-Voit.at → link without description
+
+- list item
+- another item
+  - sub-item
+    1. also enumerated
+    2. if you like
+- [ ] yet to be done
+- [X] item which is done
+
+: Simple pre-formatted text such as for source code.
+: This also respects the line breaks. *bold* is not bold here.
+
+
+* Footnotes 
+A footnote is created like this [fn:1] (use C-c C-c to jump between definition
+and reference).  Can  have a new section at the  end called footnote (start
+with one *) to store them
+
+[fn:1] Please refer to X and Y (2019)
+
+
+* Cross references
+
+Pay attention that the macro Label should be contingent the table immediately following
+
+Note that you can put either Tbl or tbl and the font will change accordingly
+
+** For a table
+
+#+CAPTION: Percentage of literate men and women, by country (per cent)
+#+LABEL: tbl:super-table
+| Country    | Men | Women |
+|------------+-----+-------|
+| India      |  75 |    43 |
+| Bangladesh |  83 |    63 |
+| Rwanda     |  77 |    60 |
+
+Please refer to [@Tbl:super-table] for the level of underdevelopment.
+
+
+** For a figure
+
+#+CAPTION: Google NGrams Viewer Searches
+#+LABEL: fig:ngrams
+[[file:ngrams.png]]
+
+Please refer to [@Fig:ngrams] for more details
+
+
+
+** For a section
+:PROPERTIES:
+:CUSTOM_ID: sec:one
+:END:
+
+Please refer to [@Sec:one] for more details
+
+
+** For an equation
+
+\[e^x = 4\]
+
+
+$$f(x) =  \sum\limits_0^\infty(f^{(n)}(x)|_{x=0} \cdot x)$${#eq:super} 
+
+See my nice equation [@eq:super]
+
+
+The scaling for 1.3 airmasses is src_python{1.3**(3.0/5.0)} 
+
+ You can toggle symbols over these commands with this command: elisp:org-toggle-pretty-entities or C-c C-x .
+
+
+** Remove prefix
+
+#+CAPTION: Percentage of literate men and women, by country (per cent)
+#+LABEL: tbl:super-table2
+| Country | Men | Women |
+|------------+-----+-------|
+| India | 75 | 43 |
+| Bangladesh | 83 | 63 |
+| Rwanda | 77 | 60 |
+
+Please refer to Table [-@tbl:super-table2] for the level of underdevelopment.
+
+** Multiple prefix
+Please refer to Tables [-@tbl:super-table; -@tbl:super-table2] for a detailed explanation
+
+* Mathematics
+hello $\int_{-\infty}^{\infty} \frac{1}{x} \ = \ [ln x]_{-\infty}^{\infty}$
+
+\[e^x = 4\]
+
+$$f(x) =  \sum\limits_0^\infty(f^{(n)}(x)|_{x=0} \cdot x)$${#eq:super} 
+
+See my nice equation [@eq:super]
+
+
+* Citations with bibliography
+
+# Pandoc with citeproc-hs
+
+-   [@item1] says blah.
+
+-   [@item1] [p. 30] says blah.
+
+-   @item1 [p. 30, with suffix] says blah.
+
+-   @item1 [-@item2 p. 30; see also @item3] says blah.
+
+-   In a note.[^1]
+
+-   A citation group [see @item1 p. 34-35; also @item3 chap. 3].
+
+-   Another one [see @item1 p. 34-35].
+
+-   And another one in a note.[^2]
+
+-   Citation with a suffix and locator [@item1 pp. 33, 35-37, and nowhere else].
+
+-   Citation with suffix only [@item1 and nowhere else].
+
+-   Now some modifiers.[^3]
+
+-   With some markup [*see* @item1 p. **32**].
+
+[^1]: A citation without locators [@item3].
+
+[^2]: Some citations [see @item2 chap. 3; @item3; @item1].
+
+[^3]: Like a citation without author: [-@item1], and now Doe with a locator [-@item2 p. 44].
+
+
+* Tables
+https://orgmode.org/worg/org-tutorials/tables.html
+
+- For tables, just start to type the first row and the line
+|Name|Phone|Age|
+|-
+- Then TAB to align and fill the table
+- To create a line between rows, just C-c -
+
+|----------+----------+----------+---+--------+---|
+| Column 1 | Column 2 | Column 3 |   |        |   |
+|----------+----------+----------+---+--------+---|
+| Idea one |          | Idea 2   |   | Idea 3 |   |
+|----------+----------+----------+---+--------+---|
+|----------+----------+----------+---+--------+---|
+
+
+Another solution: separate  different items with comma, select  the region and
+C-c | (pay attention, with the capital |): will create the table
+
+some, comma separated, value
+
+Then C-c - to create a new row
+
+Table example  to manage export under  word, with grouping and  alignment Note
+the extra column on the left and the extra row in orange: parameters
+|   |  N | N^2 | N^3 | N^4 | sqrt(n) | sqrt[4](N) |
+|---+----+-----+-----+-----+---------+------------|
+| / | <> |   < |     |   > |       < |          > |
+| # |  1 |   1 |   1 |   1 |       1 |          1 |
+| # |  2 |   4 |   8 |  16 |  1.4142 |     1.1892 |
+| # |  3 |   9 |  27 |  81 |  1.7321 |     1.3161 |
+|---+----+-----+-----+-----+---------+------------|
+
+
+Prefixed with the Shift  key, these command will insert a new  column or a new
+row, instead of  moving it.  For example,  with the cursor initially  in the B
+cell, S-M-<right> will insert a new column between A and B
+
+
+* Literate programming with Orgmode
+https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html
+
+#+begin_src python :exports none :session :results output
+  # df = pd.DataFrame({'a': [1, 2, 3],
+  #                    'b': [4, 5, 6]})
+  # df_len_columns = len(df.columns)
+  # df_len_cases = len(df.index)
+#+end_src
+
+#+RESULTS:
+
+# The result of my computation is src_python[:session]{print(df_len_columns)}
+
+
+#+MACRO: 
+# - Inline code src_python[:results output]{return(2*2)} {{{results(=4=)}}}
+
+
+* Center text
+It seems that it doesn't work either...
+#+BEGIN_CENTER
+Everything should be made as simple as possible, \\
+but not any simpler
+#+END_CENTER
+
+
+* References
+#+BIBLIOGRAPHY: biblio plain
+
+
+
