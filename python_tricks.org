@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2019-12-10 10:23:38 RLafarguette"
+#+DATE:      Time-stamp: "2020-01-11 15:56:51 RLafarguette"
 
 #+begin_src python
 """
@@ -10,6 +10,12 @@ romain.lafarguette@ecb.europa.eu
 Time-stamp: "2019-12-09 10:28:23 rlafarguette"
 """
 #+end_src
+
+# C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
+
+
+* Interesting sources
+https://www.dataschool.io/python-pandas-tips-and-tricks/
 
 * Modules, classes and functions
 #+begin_src python
