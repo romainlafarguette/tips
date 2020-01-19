@@ -1,12 +1,12 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-01-11 15:56:51 RLafarguette"
+#+DATE:      Time-stamp: "2020-01-18 02:40:19 RLafarguette"
 
 #+begin_src python
 """
 Some tricks for Python
-romain.lafarguette@ecb.europa.eu
+Romain Lafarguette, romain.lafarguette@imf.org
 Time-stamp: "2019-12-09 10:28:23 rlafarguette"
 """
 #+end_src
@@ -15,7 +15,16 @@ Time-stamp: "2019-12-09 10:28:23 rlafarguette"
 
 
 * Interesting sources
+
+** For beginners
+https://www.learndatasci.com/tutorials/python-pandas-tutorial-complete-introduction-for-beginners/
 https://www.dataschool.io/python-pandas-tips-and-tricks/
+https://python.quantecon.org/
+https://automatetheboringstuff.com/
+
+** Advanced users
+https://www.kevinsheppard.com/teaching/python/notes/
+
 
 * Modules, classes and functions
 #+begin_src python
@@ -558,6 +567,18 @@ for DB in countrydata:
     cols = [x for x in DB.columns if x not in dco.columns or x in ['iso3','year']]
     dco  = pd.merge(dco, DB[cols], on=["iso3","year"], how='outer', suffixes=['',''])
 
+# Don't convert 1d dataframe in series
+dff.loc[[index_value]] # Keep the dataframe 
+dff.loc[index_value] # Transform in series
+
+
+# Mix iloc and loc
+dres.iloc[[5], dres.columns.get_indexer(vars_l)] 
+# Note that [[5]] will get a dataframe
+
+# Create a single row pandas dataframe
+pd.DataFrame([[1,2]], columns=['a', 'b'])
+
 ## Merge on index
 dq = pd.merge(dec, dqd, left_index=True, right_index=True, suffixes=('', '_y'))
 
@@ -773,6 +794,7 @@ depvar = ['y_t']
 indvars_l = ['y_fwd_4', 'realint', 'tbilrate', 'unemp']
 
 #+end_src python
+
 
 * Statsmodels
   Nice dataset on US macro quarterly data
@@ -1463,6 +1485,10 @@ ax.set_yticks([0,10,50,150])
 plt.show()
 
 
+## Cool horizontal legend
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
+          ncol=3, fancybox=True, shadow=True)
+
 ## Standard chart with dates
 f, ax = plt.subplots()
 ax.plot(d_r2_factors['r2_1'])
@@ -1759,6 +1785,18 @@ wkmean.insert_textbox('D3', 'IRF: World FCI', txt_opt)
 
 
 
+
+* Warnings
+#+begin_src python
+# Warnings management
+# With a lot of qreg, the convergence warnings are overwhelming
+from  warnings import simplefilter
+
+from statsmodels.tools.sm_exceptions import (ConvergenceWarning,
+                                             IterationLimitWarning)
+simplefilter("ignore", category=ConvergenceWarning)
+simplefilter("ignore", category=IterationLimitWarning)
+#+end_src python
 
 * Work with word
 
