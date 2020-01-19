@@ -4,6 +4,12 @@
 #+DATE: Monday January 1 2020
 #+STARTUP: showall
 
+
+* TOC and TOL
+#+TOC: listings           build a list of listings
+#+TOC: tables             build a list of tables
+
+
 * Commands and installation
 
 ** Installation
@@ -16,14 +22,16 @@
   orgmode-tricks.org). Change the extensions are needed
 
 
-** Commands
+** Commands in Windows shell (need in the same folder as the file)
 
 *** With cross-reference, bibliography and default style 
-pandoc -F pandoc-citeproc --bibliography biblio.bib orgmode-file.org -o output.docx
+pandoc -F pandoc-crossref -F pandoc-citeproc --bibliography biblio.bib -s orgmode_tricks.org -o output.docx
 
+*** Without cross-reference, but with bibliography and default style 
+pandoc  -F pandoc-citeproc --bibliography biblio.bib -s orgmode_tricks.org -o output.docx
 
 *** With cross-references, bibliography and bibliographystyle (csl file in folder)
-pandoc -F pandoc-crossref -F pandoc-citeproc --bibliography biblio.bib --csl chicago-fullnote-bibliography.csl orgmode-file.org -o output.docx
+pandoc -F pandoc-crossref -F pandoc-citeproc --bibliography biblio.bib --csl chicago-fullnote-bibliography.csl orgmode_tricks.org -o output.docx
 
 
 *** With cross-references no bibliography:
@@ -32,6 +40,8 @@ pandoc -F pandoc-crossref -F pandoc-citeproc orgmode-file.org -o output.docx
 *** To use a Word template to generate another Word document
 pandoc --reference-doc template.docx -o output.docx orgmode-file.org
 
+
+# C:\Users\rlafarguette\AppData\Local\Pandoc
 
 ** Some references on orgmode
 - Reference card: https://orgmode.org/worg/orgcard.html
@@ -42,6 +52,9 @@ pandoc --reference-doc template.docx -o output.docx orgmode-file.org
 - Pandoc Demos: https://pandoc.org/demos.html
 - Literate programming : http://lierdakil.github.io/pandoc-crossref/demo/output.html
 
+
+** Symbols for orgmode
+https://orgmode.org/worg/org-symbols.html
 
 * Basic syntax
 Paragraphs are separated by at least one empty line.
@@ -70,14 +83,12 @@ http://Karl-Voit.at → link without description
 : Simple pre-formatted text such as for source code.
 : This also respects the line breaks. *bold* is not bold here.
 
-
 * Footnotes 
 A footnote is created like this [fn:1] (use C-c C-c to jump between definition
 and reference).  Can  have a new section at the  end called footnote (start
 with one *) to store them
 
 [fn:1] Please refer to X and Y (2019)
-
 
 * Cross references
 
@@ -155,7 +166,6 @@ $$f(x) =  \sum\limits_0^\infty(f^{(n)}(x)|_{x=0} \cdot x)$${#eq:super}
 
 See my nice equation [@eq:super]
 
-
 * Citations with bibliography
 
 # Pandoc with citeproc-hs
@@ -190,7 +200,6 @@ See my nice equation [@eq:super]
 
 [^3]: Like a citation without author: [-@item1], and now Doe with a locator [-@item2 p. 44].
 
-
 * Tables
 https://orgmode.org/worg/org-tutorials/tables.html
 
@@ -200,6 +209,8 @@ https://orgmode.org/worg/org-tutorials/tables.html
 - Then TAB to align and fill the table
 - To create a line between rows, just C-c -
 
+#+CAPTION: Percentage of literate men and women, by country (per cent)
+#+LABEL: tbl:super-table
 |----------+----------+----------+---+--------+---|
 | Column 1 | Column 2 | Column 3 |   |        |   |
 |----------+----------+----------+---+--------+---|
