@@ -1,2 +1,2 @@
 # tips
-Tips for Python, orgmode, and R
+Tips for Python, R, Emacs, orgmode and Github
