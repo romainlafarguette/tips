@@ -3,15 +3,9 @@
 #+EMAIL: rlfarguette@imf.org
 #+DATE: Monday January 1 2020
 #+STARTUP: showall
-
-
-* TOC and TOL
-#+TOC: listings           build a list of listings
-#+TOC: tables             build a list of tables
-
+#+STARTUP: nofninline # No footnotes inline: correct formatting under Word
 
 * Commands and installation
-
 ** Installation
 - Need to have pandoc installed (https://pandoc.org/installing.html)
 - Also download pandoc-crossref which should be either in the path or in the
@@ -21,9 +15,7 @@
   and type the following commands, (assuming the file is called
   orgmode-tricks.org). Change the extensions are needed
 
-
 ** Commands in Windows shell (need in the same folder as the file)
-
 *** With cross-reference, bibliography and default style 
 pandoc -F pandoc-crossref -F pandoc-citeproc --bibliography biblio.bib -s orgmode_tricks.org -o output.docx
 
@@ -32,7 +24,6 @@ pandoc  -F pandoc-citeproc --bibliography biblio.bib -s orgmode_tricks.org -o ou
 
 *** With cross-references, bibliography and bibliographystyle (csl file in folder)
 pandoc -F pandoc-crossref -F pandoc-citeproc --bibliography biblio.bib --csl chicago-fullnote-bibliography.csl orgmode_tricks.org -o output.docx
-
 
 *** With cross-references no bibliography:
 pandoc -F pandoc-crossref -F pandoc-citeproc orgmode-file.org -o output.docx
@@ -43,6 +34,16 @@ pandoc --reference-doc template.docx -o output.docx orgmode-file.org
 
 # C:\Users\rlafarguette\AppData\Local\Pandoc
 
+** Create a windows script to automatize opening Word, etc.
+   In Emacs:
+   - M-x shell
+   - powershell.exe -ExecutionPolicy bypass 
+   - \my_script.ps1
+
+Note: to open a Word document in a script, just:
+start my_doc.docx
+
+  
 ** Some references on orgmode
 - Reference card: https://orgmode.org/worg/orgcard.html
 - General: https://karl-voit.at/2017/09/23/orgmode-as-markup-only/
@@ -52,26 +53,39 @@ pandoc --reference-doc template.docx -o output.docx orgmode-file.org
 - Pandoc Demos: https://pandoc.org/demos.html
 - Literate programming : http://lierdakil.github.io/pandoc-crossref/demo/output.html
 
-
-** Symbols for orgmode
-https://orgmode.org/worg/org-symbols.html
+* TOC and TOL
+#+TOC: listings           build a list of listings
+#+TOC: tables             build a list of tables
 
 * Basic syntax
+** New line
+Here I put a new line\\
+
+** Paragraphs
 Paragraphs are separated by at least one empty line.
 
+** Page breaks
+The easiest is to configure Word to have automatically a page break before
+each Heading 1 section https://wordmvp.com/FAQs/Formatting/PageBreakBeforeHeading.htm
+
+Tricks to have a pagebreak anywhere in the document: just use empty * and word
+will automatically break the page !
+
+** Fonts
 Available fonts style:
 - *bold*      
-- /italic/  
+- /italic/  (also \emph{} for large paragraphs)
 -_underlined_
 - =code=
 - ~verbatim~
 - +strikethrough+
 
-
+** Description
 [[http://Karl-Voit.at][Link description]] [[link in html][]]
 
 http://Karl-Voit.at → link without description
 
+** Lists
 - list item
 - another item
   - sub-item
@@ -80,8 +94,34 @@ http://Karl-Voit.at → link without description
 - [ ] yet to be done
 - [X] item which is done
 
+# Pay attention at the :: in description lists
+   My favorite scenes are (in this order)
+   1. The attack of the Rohirrim
+   2. Eowyn's fight with the witch king
+      + this was already my favorite scene in the book
+      + I really like Miranda Otto.
+   3. Peter Jackson being shot by Legolas
+      - on DVD only
+      He makes a really funny face when it happens.
+   But in the end, no individual scenes matter but the film as a whole.
+   Important actors in this film are:
+   - Elijah Wood :: He plays Frodo
+   - Sean Astin :: He plays Sam, Frodo's friend.  I still remember
+     him very well from his role as Mikey Walsh in The Goonies.
+
+** Code text
 : Simple pre-formatted text such as for source code.
 : This also respects the line breaks. *bold* is not bold here.
+
+** Symbols 
+Just insert as \pound or \gamma
+https://orgmode.org/worg/org-symbols.html
+
+* List of acronmys
+# Easier to put it in a table actually
+| *HKD*  | Hong Kong Dollar |
+| *HKMA* | Hong Kong Monetary Authority |
+| *LERS* | Linked Exchange Rate System |
 
 * Footnotes 
 A footnote is created like this [fn:1] (use C-c C-c to jump between definition
@@ -114,6 +154,7 @@ Please refer to [@Tbl:super-table] for the level of underdevelopment.
 #+CAPTION: Google NGrams Viewer Searches
 #+LABEL: fig:ngrams
 [[file:ngrams.png]]
+
 
 Please refer to [@Fig:ngrams] for more details
 
@@ -241,7 +282,6 @@ Prefixed with the Shift  key, these command will insert a new  column or a new
 row, instead of  moving it.  For example,  with the cursor initially  in the B
 cell, S-M-<right> will insert a new column between A and B
 
-
 * Literate programming with Orgmode
 https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html
 
@@ -260,14 +300,12 @@ https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html
 #+MACRO: 
 # - Inline code src_python[:results output]{return(2*2)} {{{results(=4=)}}}
 
-
 * Center text
 It seems that it doesn't work either...
 #+BEGIN_CENTER
 Everything should be made as simple as possible, \\
 but not any simpler
 #+END_CENTER
-
 
 * References
 #+BIBLIOGRAPHY: biblio plain
