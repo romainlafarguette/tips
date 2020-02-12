@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-01-18 02:40:19 RLafarguette"
+#+DATE:      Time-stamp: "2020-02-11 19:19:38 RLafarguette"
 
 #+begin_src python
 """
@@ -12,7 +12,6 @@ Time-stamp: "2019-12-09 10:28:23 rlafarguette"
 #+end_src
 
 # C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
-
 
 * Interesting sources
 
@@ -512,6 +511,21 @@ current_dir = Path(os.path.dirname(os.path.realpath('__file__')))
 root_dir = current_dir.ancestor(1)
 data_dir = Path(root_dir + '\\Data\\')
 
+
+# With pathlib (better)
+import pathlib
+script_dir = pathlib.Path.cwd() # Current working directory
+root_dir = script_dir.parent.parent 
+fund_dir = script_dir.parent
+data_dir = fund_dir / 'Data' / 'Funding_Template'
+
+# list all files with excel extension
+xl_all_l = list(data_dir.glob('*.xlsx')) # Only the Excel files
+
+# Use .stem to keep only the "core name" and filter appropriately
+xl_file_l = [f for f in xl_all_l if not f.stem.startswith('~')]
+
+
 #+end_src python
 
 
@@ -607,6 +621,12 @@ c0 = c0.set_index("Year") ## Important to have the right index
 c1 = pd.DataFrame(c0.iloc[:,1:].stack()); c1.columns = ["currency_regime"]
 c1["year"] = c1.index.get_level_values(0) # Access multilevels index
 c1["country_short"] = c1.index.get_level_values(1) # Access multilevels index
+
+# From wide to long, very efficient
+dl_comp = pd.melt(df_comp, id_vars=['date', 'bank'],
+                  value_vars=comp_var_cols,
+                  var_name='variable', value_name='value').copy()
+
 
 ## From long to wide on two index
 dlong = dlong.set_index(['Date_end_period', 'Country'])
@@ -1461,8 +1481,16 @@ for obj_name in serial_l:
 #+end_src python
 
 
-* Plotting
+* Charts
 
+** Best example
+#+begin_src python
+ax = plt.subplot(111, xlabel='x', ylabel='y', title='title')
+for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
+             ax.get_xticklabels() + ax.get_yticklabels()):
+    item.set_fontsize(20)
+
+#+end_src python
 ** Matplotlib
 #+begin_src python
 import matplotlib.dates as mdates
@@ -1797,6 +1825,7 @@ from statsmodels.tools.sm_exceptions import (ConvergenceWarning,
 simplefilter("ignore", category=ConvergenceWarning)
 simplefilter("ignore", category=IterationLimitWarning)
 #+end_src python
+
 
 * Work with word
 
