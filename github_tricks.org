@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2019-12-10 16:58:17 RLafarguette"
+#+DATE:      Time-stamp: "2020-02-04 20:42:09 RLafarguette"
 
 * Software
   1. At the Fund: Use Portable Git to access Git 
@@ -42,6 +42,26 @@ git remote add origin https://github.com/cubeton/mynewrepository.git
 ** Push a branch on Github
 git push origin my-new-branch
 
+* Git ignore
+Create a .gitignore file somewhere with:
+
+# -*- mode: gitignore; -*-
+
+# Org-mode
+.org-id-locations
+*_archive
+
+# Emacs temporary files
+*[#]*[#]
+*[#]*
+
+# Executables and word files
+*.docx
+*.exe
+
+# Entire folders
+Archives/
+auto/
 
 * Pull from Github (an already existing project, else clone)
 git pull origin master
