@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-02-11 19:19:38 RLafarguette"
+#+DATE:      Time-stamp: "2020-02-12 16:17:36 RLafarguette"
 
 #+begin_src python
 """
@@ -879,6 +879,19 @@ dm['MSCI($)_cap_MA12'] = dmg['MSCI($)_cap'].apply(lambda x: x.rolling(12).mean()
 isinstance(var, pd.DataFrame) ; isinstance(var, basestring) # For example
 isinstance(wt_2010[KEY],numbers.Number) # Need import numbers as preamble
 
+# Groupby with multiple functions
+ds = data.groupby('fdate').apply(
+    lambda x: pd.Series({
+        'mean' : x['value'].mean(),
+        'median' : x['value'].median(),
+        'q05' : x['value'].quantile(0.05),  
+        'q25' : x['value'].quantile(0.25),
+        'q75' : x['value'].quantile(0.75),
+        'q95' : x['value'].quantile(0.95),          
+    })
+)
+
+
 ## Create pivot tables
 ### 'values' can be omitted
 table = pivot_table(df, values='D', index=['A', 'B'], columns=['C'], aggfunc=np.sum)
@@ -1491,11 +1504,42 @@ for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
     item.set_fontsize(20)
 
 #+end_src python
+
+** Fan chart
+
+# Initialize the plot    
+ax = plt.subplot(111, xlabel='', ylabel='', title='')
+
+# Plot each quantile values
+ax.plot(ds['q05'], linestyle=':', color='black', label='5th')
+ax.plot(ds['q25'], linestyle='--', color='black', label='25th')
+ax.plot(ds['median'], linestyle='-', color='black', label='Median', lw=2)
+ax.plot(ds['q75'], linestyle='--', color='black', label='75th')
+ax.plot(ds['q95'], linestyle=':', color='black', label='95th')
+
+# Fill the colors between the lines with different transparency level
+ax.fill_between(ds.index, ds['q05'], ds['q25'], color='red', alpha=0.15)
+ax.fill_between(ds.index, ds['q75'], ds['q95'], color='red', alpha=0.15)
+ax.fill_between(ds.index, ds['q25'], ds['median'], color='red', alpha=0.75)
+ax.fill_between(ds.index, ds['median'], ds['q75'], color='red', alpha=0.75)  
+
+# Adjust legend, labels, etc.
+ax.legend(loc='best', ncol=4, fancybox=True, shadow=True, fontsize=12)
+
+# Ajust other items in bulk
+for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
+             ax.get_xticklabels() + ax.get_yticklabels()):
+    item.set_fontsize(20)
+
+
+plt.show()
+
+
 ** Matplotlib
 #+begin_src python
 import matplotlib.dates as mdates
 
-## Standard simple chart
+# Standard simple chart
 fig = plt.figure()
 
 ax = fig.add_subplot(111)
@@ -1513,11 +1557,11 @@ ax.set_yticks([0,10,50,150])
 plt.show()
 
 
-## Cool horizontal legend
+# Cool horizontal legend
 ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
           ncol=3, fancybox=True, shadow=True)
 
-## Standard chart with dates
+# Standard chart with dates
 f, ax = plt.subplots()
 ax.plot(d_r2_factors['r2_1'])
 ax.plot(d_r2_factors['r2_3'])
@@ -1527,13 +1571,13 @@ ax.xaxis.set_major_locator(mdates.YearLocator(1, month=1, day=1))
 plt.title('Rolling R2 on the factors from the factor model 5 years window')
 plt.show()
 
-## Set the dates limit and format
+# Set the dates limit and format
 ax1.set_xlim([datetime.date(1989, 1, 1), datetime.date(2017, 12, 31)])
 ax2.set_xlim([datetime.date(1989, 1, 1), datetime.date(2017, 12, 31)])
 ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y'))
 ax2.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y'))
 
-## Tick every year, beginning of the year
+# Tick every year, beginning of the year
 f, ax = plt.subplots()
 ax.plot(d_r2_factors)
 ax.set_ylim(0, 1)
