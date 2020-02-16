@@ -1,20 +1,9 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-02-12 16:17:36 RLafarguette"
-
-#+begin_src python
-"""
-Some tricks for Python
-Romain Lafarguette, romain.lafarguette@imf.org
-Time-stamp: "2019-12-09 10:28:23 rlafarguette"
-"""
-#+end_src
-
-# C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
+#+DATE:      Time-stamp: "2020-02-16 02:12:43 RLafarguette"
 
 * Interesting sources
-
 ** For beginners
 https://www.learndatasci.com/tutorials/python-pandas-tutorial-complete-introduction-for-beginners/
 https://www.dataschool.io/python-pandas-tips-and-tricks/
@@ -24,6 +13,45 @@ https://automatetheboringstuff.com/
 ** Advanced users
 https://www.kevinsheppard.com/teaching/python/notes/
 
+* Local variables
+# C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
+* Data organization
+  - Best way is to store and manipulate data in long format
+  - Frame with columns as: ['date', 'variable', 'value']
+  - Allows to store data at different frequency
+  - Easy to convert with pandas pivot table function
+  dwide = dlong.pivot_table(index = 'index', columns='Variable', values='Value')
+  - Also much easier when using seaborn to plot 
+  - Can add: 'frequency' as a column if needed
+
+* From long to wide and wide to long
+# Best source
+https://pandas.pydata.org/pandas-docs/stable/user_guide/reshaping.html
+** From long to wide
+#+begin_src python
+
+# Note that pivot_table does an average by default, can be changed
+
+# Need to use a column as index
+
+# Pivot_table is useful when all variables are numeric
+dlong['fdate'] = pd.to_datetime(dlong.index)
+dlong.pivot_table(index='fdate', columns='variable', values='value')
+
+# With two index
+dfw = dfl.pivot_table(index=['fdate', 'bank'],
+                      columns='variable', values='value')
+
+dfw.index.get_level_values('bank')
+# Else use pivot
+# While pivot() provides general purpose pivoting with various data types 
+# (strings, numerics, etc.), pandas also provides pivot_table() 
+# for pivoting with aggregation of numeric data.
+#+end_src python
+** From wide to long
+dlong = pd.melt(dwide,
+value_vars=["Under a year", "Over a year"],
+id_vars=["bank", "fdate"])
 
 * Modules, classes and functions
 #+begin_src python
@@ -147,8 +175,6 @@ http://stackoverflow.com/questions/10077689/r-cmd-on-windows-7-error-r-is-not-re
 ## Typically in user account, change PATH with: C:\Program Files\R\R-3.3.0\bin\x64
 
 #+end_src
-
-
 
 * Class and inheritance
 #+begin_src python
@@ -280,9 +306,6 @@ def __init__(self, NpSampler, exog_cond_d):
 
 
 #+end_src
-
-
-
 
 
 * System Functions
@@ -498,8 +521,6 @@ print(msg)
 #+end_src
 
 
-
-
 * Paths
 
 ** Relative paths
@@ -527,7 +548,6 @@ xl_file_l = [f for f in xl_all_l if not f.stem.startswith('~')]
 
 
 #+end_src python
-
 
 * Pandas
 
@@ -793,7 +813,6 @@ df               = pd.read_sql(sql_expression, raw_engine, params={'date': dt.da
 
 #+end_src
 
-
 * Data example
 
 #+begin_src python
@@ -815,11 +834,9 @@ indvars_l = ['y_fwd_4', 'realint', 'tbilrate', 'unemp']
 
 #+end_src python
 
-
 * Statsmodels
   Nice dataset on US macro quarterly data
       df = sm.datasets.macrodata.load_pandas().data 
-
 
 * Variables
 
@@ -1018,7 +1035,6 @@ pd.concat([list_of_pandas_series], axis=1)
 
 #+end_src python
 
-
 * Bootstrap
 
 ** Sampling with replacement
@@ -1060,7 +1076,6 @@ pd.concat([list_of_pandas_series], axis=1)
 
  #+end_src python
 
-
 * Tuples and multiindex
 
 ** Select only one element of the multi-index
@@ -1071,7 +1086,6 @@ pd.concat([list_of_pandas_series], axis=1)
 isinstance(d0.index, pd.indexes.multi.MultiIndex) == True
 
 #+end_src python
-
 
 * List
 #+begin_src python
@@ -1173,7 +1187,6 @@ def sublist_chunks(long_list, n):
 
 #+end_src
 
-
 * Dictionaries
 #+begin_src python
 
@@ -1227,7 +1240,6 @@ for DICO in dico_list:
 country_LEI_dict = {key: list() for key in countries_list}
 
 #+end_src python
-
 
 * Namedtuple
 #+begin_src python
@@ -1301,7 +1313,6 @@ sorted(agg_series_l, key=lambda x: x.num_vars, reverse=True)
 #+end_src python
 
 
-
 * String
 #+begin_src python
 
@@ -1335,11 +1346,9 @@ str(dt.datetime(2015,1,1))
 
 #+end_src
 
-
 * Floating points
 
 Check first answer here: https://stackoverflow.com/questions/477486/how-to-use-a-decimal-range-step-value
-
 
 * Dates and time
 #+begin_src python
@@ -1408,7 +1417,6 @@ dq1['minute'] = dq1['timestamp'].map(lambda ROW: ROW.strftime('%H:%M'))
 
 #+end_src
 
-
 * Numpy
 
 #+begin_src python
@@ -1425,7 +1433,6 @@ np.repeat(a, repeats=[3], axis=0)
 
 #+end_src python
  
-
 * Exceptions
 #+begin_src python
 # Customize the exception behaviour    
@@ -1438,7 +1445,6 @@ except Exception as exc: # If error, print it and move on
 
 
 #+end_src python
-
 
 * Pickles
 #+begin_src python
@@ -1470,7 +1476,6 @@ for obj_name in serial_l:
 
 #+end_src python
 
-
 * Eval/Repr
 
 #+begin_src python
@@ -1493,9 +1498,70 @@ for obj_name in serial_l:
 
 #+end_src python
 
+* Seaborn charts
+Should have data in long format (date, variable, value)
+
+** General options
+#+begin_src python
+#plt.rcParams.keys() # Get the list of all items
+sns.set(rc={'figure.figsize':(11.7,8.27),
+            "font.size":20,
+            "axes.titlesize":20,
+            "axes.labelsize":20,
+            'xtick.labelsize':15,
+            'ytick.labelsize':15},
+        style="white")
+#+end_src python
+
+
+** Customize options for a given chart
+#+begin_src python
+dilm_st = dilm.loc[dilm.variable=='Short term', :].copy()
+dilm_st['value'] = 100*dilm_st['value']
+g = sns.barplot(x="bank", y="value", color="darkblue", data=dilm_st)
+g.set(xlabel='',
+      ylabel='% of liabilities below a year',
+      ylim=(90, 100),
+      title='Distribution of short term liabilities over banks, average over time')
+plt.show()
+#+end_src python
+
+** Lineplot with different plot style
+#+begin_src python
+dfv = dfb.loc[dfb['variable'].isin(rate_vars_l), :].copy()
+dfv['date'] = dfv.index
+sns.lineplot(x='date',
+             y='value',
+             style='variable',
+             data=dfv,
+             linewidth=2)
+
+plt.show()
+#+end_src python
+
+** Multiple plots (relplot)
+# Need to add an extra column, e.g. 'bank'
+#+begin_src python
+dfv = df.loc[df['variable'].isin(vi_r_l), :].copy()
+dfv = dfv.loc[dfv.index>date(2012,1,1), :].copy()
+
+dfv['date'] = dfv.index
+
+g = sns.relplot(x="date",
+                y="value",
+                col="bank",
+                style="variable",
+                kind="line",
+                col_wrap=4,
+                data=dfv)
+g._legend.remove()
+plt.show()
+#+end_src python
+
+
 
 * Charts
-
+Should use Seaborn whenever possible: much better than matplotlib
 ** Best example
 #+begin_src python
 ax = plt.subplot(111, xlabel='x', ylabel='y', title='title')
@@ -1533,7 +1599,6 @@ for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
 
 
 plt.show()
-
 
 ** Matplotlib
 #+begin_src python
@@ -1779,8 +1844,6 @@ show(hm)
 
 
 
-
-
 * Custom functions
 
 ** Regressions
@@ -1812,7 +1875,6 @@ def star_function(beta, pvalue):
     return('{}{}'.format(beta,stars))
 #+end_src
 
-
 * Work with R
 
 ** Basics
@@ -1833,7 +1895,6 @@ r_f = robjects.r['f']
 ## Able to call it from Python directly
 res = r_f(3)
 #+end_src python
-
 
 * Export
 
@@ -1857,7 +1918,6 @@ wkmean.insert_textbox('D3', 'IRF: World FCI', txt_opt)
 
 
 
-
 * Warnings
 #+begin_src python
 # Warnings management
@@ -1870,7 +1930,6 @@ simplefilter("ignore", category=ConvergenceWarning)
 simplefilter("ignore", category=IterationLimitWarning)
 #+end_src python
 
-
 * Work with word
 
 
@@ -1879,7 +1938,6 @@ simplefilter("ignore", category=IterationLimitWarning)
 import docx   ## Pay attention: need to install python-docx and not docx !!
 
 #+end_src python
-
 
 * Coding music
 
