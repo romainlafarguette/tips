@@ -1,6 +1,6 @@
 ;; ;; ============================================================================
 ;; ;; Emacs init file FOR WINDOWS mostly Activate Clear type antiliasing
-;; ;; Time-stamp: <2020-01-19 00:00:08 RLafarguette>
+;; ;; Time-stamp: <2020-03-11 16:30:56 RLafarguette>
 ;; ;; Please install : M-x package-install on wmctrl, aspell, flyspell,
 ;; ;;                  browse-killring, elpy, framemove
 
@@ -27,13 +27,12 @@
 
 ;;--------------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------------
-;; System configurations : modify on different computers the romain_path
+;; System dependent configurations : please modify on different computers the romain_path
 ;; Please run: M-x package-install : browse-killring, elpy, framemove
 ;;--------------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------------
 ;; Path for .el files
 (defvar romain_path "c:/Users/rlafarguette/GNU Emacs 25.3/site-lisp")
-(defvar scimax_path "c:/Users/rlafarguette/Box Sync/Perso/Software/Emacs/scimax")
 
 (setq load-path (cons romain_path  load-path))
 
@@ -215,11 +214,25 @@
 ;;--------------------------------------------------------------------------------
 
 ;; Justify text
-(global-set-key (kbd "C-c q") 'auto-fill-mode)
-
-;; http://www.chemie.fu-berlin.de/chemnet/use/info/emacs/emacs_24.html#SEC209
 (setq-default fill-column 78) ;; Directly: M-x set-fill-column
-(global-set-key "\M-q" 'set-justification-full)
+
+(defun justify-paragraph ()
+  (interactive)
+   (set-fill-column 78)
+   (set-justification-full (region-beginning) (region-end))
+  )
+
+(global-set-key "\M-q" 'justify-paragraph)
+
+;; One-line paragraph
+(defun line-paragraph ()
+  (interactive)
+  ;;(region-beginning)
+  (set-fill-column 9999)
+  (fill-paragraph)
+  ;;(region-end)  )
+
+(global-set-key "\M-s" 'line-paragraph)
 
 ;; Automaticall insert pairs of element [for parenthesis use M-(}
 (global-set-key (kbd "M-[") 'insert-pair) ;; for []
@@ -462,19 +475,12 @@ expression of the same type as those required by around advices"
 (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
 
 (require 'org-install)
+(require 'org)
+;; Make Org mode work with files ending in .org
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
 (setq org-log-done t)
-
-;; Not to conflict with moveframe (which I find more convenient!!)
-(define-key org-mode-map (kbd "<M-right>") nil)
-(define-key org-mode-map (kbd "<M-left>") nil)
-
-;; Move around the keys
-(define-key org-mode-map (kbd "<M-down>") 'org-next-visible-heading)
-(define-key org-mode-map (kbd "<M-up>") 'org-previous-visible-heading)
-
 
 ;; Remove postamble during html export
 (setq org-export-html-auto-postamble 'nil)
@@ -496,7 +502,6 @@ expression of the same type as those required by around advices"
 
 ;; Syntax highlight
 (setq org-src-fontify-natively t)
-
 (setq  org-odt-preferred-output-format "docx")
 
 ;; Run/highlight code using babel in org-mode
@@ -516,25 +521,92 @@ expression of the same type as those required by around advices"
 ;; Fix an incompatibility between the ob-async and ob-ipython packages
 (setq ob-async-no-async-languages-alist '("ipython"))
 
+;; Not to conflict with moveframe (which I find more convenient!!)
+(define-key org-mode-map (kbd "<M-right>") nil)
+(define-key org-mode-map (kbd "<M-left>") nil)
+
+;; Move around the keys
+(define-key org-mode-map (kbd "<M-down>") 'org-next-visible-heading)
+(define-key org-mode-map (kbd "<M-up>") 'org-previous-visible-heading)
+
+;; Adjust manually images size
+(setq org-image-actual-width nil)
+
+;; Adjust columns
+(define-key org-mode-map (kbd "\C-p") 'org-table-toggle-column-width)
+
+
+;; For reveal presentations
+;; Reveal.js + Org mode
+(require 'ox-reveal)
+(setq Org-Reveal-root "file:///path-to-reveal.js")
+(setq Org-Reveal-title-slide nil)
+
+
+
+;;--------------------------------------------------------------------------------
+;; Grammarly transfer
+;; https://www.reddit.com/r/emacs/comments/dtciau/is_there_any_way_i_can_integrate_emacs_with/
+;;--------------------------------------------------------------------------------
+
+(provide 'grammarly-transfer)
+
+(defun grammarly-export-prepare ()
+  (interactive)
+  (beginning-of-buffer)
+  (set-fill-column 9999)
+  (grammarly-loop)
+  (beginning-of-buffer) )
+
+(defun grammarly-import-prepare ()
+  (interactive)
+  (beginning-of-buffer)
+  (set-fill-column 70)
+  (grammarly-loop)
+  (beginning-of-buffer)
+  (delete-trailing-whitespace)  )
+
+(defun grammarly-loop ()
+  ;; This loop is an awkward way of doing this, but it is the only
+  ;; way that I found handles multiline itemized and numbered lists
+  (cl-loop until (eobp) do (fill-paragraph) (forward-line 1)) )
 
 ;;--------------------------------------------------------------------------------
 ;; AucteX
 ;;--------------------------------------------------------------------------------
 
+;; Pre-requisite
+(load "auctex.el" nil t t)
+
+;; AUCTeX replaces latex-mode-hook with LaTeX-mode-hook
+(add-hook 'LaTeX-mode-hook
+(lambda ()
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
+;; (setq-default TeX-master nil)
+(reftex-mode t)
+(TeX-fold-mode t)))
+
 ;; Auctex customization
 ;; PDF Latex by default
 (setq TeX-PDF-mode t)
 
-(setq TeX-auto-save t)
-(setq TeX-parse-self t)
-(setq-default TeX-master nil)
+(setq TeX-command-force "pdftex") 
+(global-set-key (kbd "C-c C-c") 'TeX-command-master)
 
-(add-hook 'LaTeX-mode-hook 'visual-line-mode)
+
+;; (add-hook 'LaTeX-mode-hook 'visual-line-mode)
 ;; (add-hook 'LaTeX-mode-hook 'flyspell-mode)
-(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+;; (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
 
-(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-(setq reftex-plug-into-AUCTeX t)
+;; (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+;; (setq reftex-plug-into-AUCTeX t)
+
+;; (setq-default TeX-master nil) ; Master file
+;; (setq TeX-show-compilation nil) ; don't show compilation mode
+;; (setq TeX-save-query nil)       ; don't prompt for saving the .tex file
+
+
 
 ;;--------------------------------------------------------------------------------
 ;; ESS with R
@@ -787,7 +859,7 @@ expression of the same type as those required by around advices"
  '(fringe-mode (quote (30 . 0)) nil (fringe))
  '(package-selected-packages
    (quote
-    (org-sidebar ob-ipython flyspell-correct use-package org-ref magit-diff-flycheck magit-reviewboard forge magit zpresent elpygen python-x isend-mode elpy ac-R)))
+    (auctex-latexmk auctex company-auctex auto-complete-auctex ox-reveal org-re-reveal org-edit-latex org-sidebar ob-ipython flyspell-correct use-package org-ref magit-diff-flycheck magit-reviewboard forge magit zpresent elpygen python-x isend-mode elpy ac-R)))
  '(pyvenv-mode t)
  '(show-paren-mode t)
  '(tool-bar-mode nil))
