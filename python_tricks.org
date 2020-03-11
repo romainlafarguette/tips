@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-02-16 02:12:43 RLafarguette"
+#+DATE:      Time-stamp: "2020-03-08 17:13:27 RLafarguette"
 
 * Interesting sources
 ** For beginners
@@ -307,7 +307,6 @@ def __init__(self, NpSampler, exog_cond_d):
 
 #+end_src
 
-
 * System Functions
 ** Files and folders
 #+begin_src python
@@ -519,7 +518,6 @@ print(msg)
 
 
 #+end_src
-
 
 * Paths
 
@@ -838,6 +836,9 @@ indvars_l = ['y_fwd_4', 'realint', 'tbilrate', 'unemp']
   Nice dataset on US macro quarterly data
       df = sm.datasets.macrodata.load_pandas().data 
 
+* Linearmodels
+  ** Panel regressions
+  Multi-hierarchical index, with entity first and then time
 * Variables
 
 ** All
@@ -1312,7 +1313,6 @@ sorted(agg_series_l, key=lambda x: x.num_vars, reverse=True)
 
 #+end_src python
 
-
 * String
 #+begin_src python
 
@@ -1513,7 +1513,6 @@ sns.set(rc={'figure.figsize':(11.7,8.27),
         style="white")
 #+end_src python
 
-
 ** Customize options for a given chart
 #+begin_src python
 dilm_st = dilm.loc[dilm.variable=='Short term', :].copy()
@@ -1558,8 +1557,6 @@ g._legend.remove()
 plt.show()
 #+end_src python
 
-
-
 * Charts
 Should use Seaborn whenever possible: much better than matplotlib
 ** Best example
@@ -1568,6 +1565,22 @@ ax = plt.subplot(111, xlabel='x', ylabel='y', title='title')
 for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
              ax.get_xticklabels() + ax.get_yticklabels()):
     item.set_fontsize(20)
+
+
+# Or using the standard pyplot interface
+# Big font for export in Orgmode/Word
+fig = plt.figure(figsize=(1.6180*7, 7))
+fonts_d = {'family':'Arial', 'color':'#004c97', 'fontweight':'bold'}
+plt.xlabel('xlabel', labelpad=30, fontsize=60, **fonts_d)
+plt.ylabel('ylabel', labelpad=30, fontsize=60, **fonts_d)
+plt.title('My title', y=1.02, fontsize=72, **fonts_d)
+plt.xticks(fontsize=48, **fonts_d)
+plt.yticks(fontsize=48, **fonts_d)
+plt.setp(plt.legend(loc='best').get_texts(),
+         fontsize=16, **fonts_d) # For legend font
+plt.tight_layout()
+plt.show()
+
 
 #+end_src python
 
@@ -1839,11 +1852,6 @@ show(hm)
 
 #+end_src
 
-
-
-
-
-
 * Custom functions
 
 ** Regressions
@@ -1915,8 +1923,6 @@ workbook  = writer.book
 sum_irf_world_mean.to_excel(writer, 'Boxes - mean values', index=True, startcol=3, startrow=4)
 wkmean = writer.sheets['Boxes - mean values']
 wkmean.insert_textbox('D3', 'IRF: World FCI', txt_opt)
-
-
 
 * Warnings
 #+begin_src python
