@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-02-04 20:42:09 RLafarguette"
+#+DATE:      Time-stamp: "2020-03-05 20:53:21 RLafarguette"
 
 * Software
   1. At the Fund: Use Portable Git to access Git 
@@ -73,3 +73,5 @@ git branch [branch-name]
 
 
 
+* Remove deleted files
+git add -u
