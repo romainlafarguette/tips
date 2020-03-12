@@ -1,7 +1,18 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-03-05 20:53:21 RLafarguette"
+#+DATE:      Time-stamp: "2020-03-11 23:24:47 Romain"
+
+* Update the local rep from the remote repo
+
+# Download all commit and info from the source
+git fetch --all 
+
+# Set the local on the source
+git reset --hard origin/master
+
+# Pull everything from source
+git pull origin master
 
 * Software
   1. At the Fund: Use Portable Git to access Git 
