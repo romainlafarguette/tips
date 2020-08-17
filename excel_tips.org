@@ -1,0 +1,11 @@
+* Shortcuts
+
+- Navigate between spreadsheets: CTRL + PAGE/UP or PAGE/DOWN
+- Edit a cell: F2
+- CTRL + SHIFT + 7 (not pad): Add an outside border
+- CTRL + SHIFT + 3 (not pad): Format standard date
+- CTRL + SHIFT + 5 (not pad): Format percentage
+- Choose formatting: CTRL-1 (use 1 from the top keyboard, not the pad)
+- Clear all formatting in cells: ALT + E A F
+
+
