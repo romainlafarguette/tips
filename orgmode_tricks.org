@@ -275,7 +275,6 @@ Please refer to [@Fig:ngrams] for more details
 
 Please refer to [@Sec:one] for more details
 
-
 * Remove prefix in cross reference with -@
 
 #+CAPTION: Percentage of literate men and women, by country (per cent)
