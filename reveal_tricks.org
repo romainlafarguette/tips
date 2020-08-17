@@ -1,0 +1,11 @@
+#+Title: My Super Presentation
+#+Author: Romain Lafarguette
+#+Email: rlafarguette@imf.org
+#+OPTIONS: num:nil toc:nil
+#+REVEAL_TRANS: Slide
+#+REVEAL_THEME: Simple
+
+# Transition options: None/Fade/Slide/Convex/Concave/Zoom
+# Theme Options: Black/White/League/Sky/Beige/Simple/Serif/Blood/Night/Moon/Solarized 
+
+# Source
