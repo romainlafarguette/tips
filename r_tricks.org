@@ -3,6 +3,13 @@
 #+EMAIL:     rlafarguette@imf.org
 
 
+* Weird comment behaviour of comments in Emacs
+Use ### instead of #
+### Left align comments
+## Block align comments
+One is right-align comments
+
+https://stackoverflow.com/questions/54755899/disable-ess-fancy-comments-with-r
 
 * Get the name of an object pass to a function
 
@@ -12,7 +19,6 @@ deparse(substitute(group_list))
 
 mylist = c(1,2,3)
 eval(parse(text='mylist'))
-
 
 * Data frames
 #+begin_src R
@@ -29,3 +35,8 @@ dn = dn[with(dn, order(country, date_m)), ] ## Order the frame
 library(DataCombine)
 dn = slide(dn, Var='rgdpQg', GroupVar='country', NewVar='rgdpQg_lag', slideBy=-1)
 #+end_src
+
+* Install package from Emacs
+install.packages('strucchange', repos='http://cran.us.r-project.org')
+
+
