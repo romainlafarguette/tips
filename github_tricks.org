@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-03-11 23:24:47 Romain"
+#+DATE:      Time-stamp: "2020-03-22 12:09:55 Romain"
 
 * Update the local rep from the remote repo
 
@@ -79,8 +79,6 @@ git pull origin master
 
 * Create a branch
 git branch [branch-name]
-
-
 
 
 
