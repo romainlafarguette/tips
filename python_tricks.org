@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-03-08 17:13:27 RLafarguette"
+#+DATE:      Time-stamp: "2020-08-16 20:12:40 Romain"
 
 * Interesting sources
 ** For beginners
@@ -37,6 +37,9 @@ https://pandas.pydata.org/pandas-docs/stable/user_guide/reshaping.html
 # Pivot_table is useful when all variables are numeric
 dlong['fdate'] = pd.to_datetime(dlong.index)
 dlong.pivot_table(index='fdate', columns='variable', values='value')
+
+# Using index directly
+dl.pivot_table(index=dl.index, columns='variable', values='value')
 
 # With two index
 dfw = dfl.pivot_table(index=['fdate', 'bank'],
@@ -551,12 +554,14 @@ xl_file_l = [f for f in xl_all_l if not f.stem.startswith('~')]
 
 #+begin_src python
 
-
 ## Improve columns display (pandas options)
 pd.set_option('display.expand_frame_repr', False)
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 8)
 pd.set_option('display.width', 100)
+
+# Change row index name
+dp.index.names = ['date']
 
 ## Create empty dataframe
 d_out = pd.DataFrame(index=[str(CURRENCY)], columns=["share_onshore","share_financial_center","share_other_offshore","fx_total_currency"])
@@ -835,6 +840,29 @@ indvars_l = ['y_fwd_4', 'realint', 'tbilrate', 'unemp']
 * Statsmodels
   Nice dataset on US macro quarterly data
       df = sm.datasets.macrodata.load_pandas().data 
+
+* PCA
+#+begin_src python
+# 1. Fit the PCA
+X_train = np.random.randn(100, 50)
+pca = PCA(n_components=30)
+pca.fit(X_train)
+
+# 2. Compute the factors
+x_pca_factors = pca.transform(X_train) # factors via function
+x_pca_factors2 = (X_train - pca.mean_).dot(pca.components_.T) # By hand
+np.testing.assert_array_almost_equal(x_pca_factors, x_pca_factors2) # Same !
+
+# Check the loadings computation by hand
+U, S, VT = np.linalg.svd(X_train - X_train.mean(0))
+np.testing.assert_array_almost_equal(VT, pca.components_) # Check the loadings
+
+# 3. Projection into the original subspace (loadings*factors)
+X_projected = pca.inverse_transform(x_pca_factors)
+X_projected2 = x_pca_factors2.dot(pca.components_) + pca.mean_
+np.testing.assert_array_almost_equal(X_projected, X_projected2) # Exact Same !
+
+#+end_src python
 
 * Linearmodels
   ** Panel regressions
@@ -1169,6 +1197,10 @@ result_map = {1: 'yes', 2: 'no'}
 # Flatten a nested list
 [item for sublist in nestedlist for item in sublist]
 
+# Deep flatten (with different nested levels)
+from pandas.core.common import flatten # Flatten lists
+list(flatten([1, [2,3], [2,3,4, [1,2]]]))
+
 # Remove one element in the list
 newcols = list(d0.columns).remove("grrates")
 
@@ -1244,7 +1276,7 @@ country_LEI_dict = {key: list() for key in countries_list}
 
 * Namedtuple
 #+begin_src python
-
+from collections import namedtuple
 
 ## Create  and Load  a named  tuple using  iterable (easiest)  
 Test =  namedtuple('Test', ['bidule','chouette'])
@@ -1314,6 +1346,10 @@ sorted(agg_series_l, key=lambda x: x.num_vars, reverse=True)
 #+end_src python
 
 * String
+
+Good reference for f strings
+https://medium.com/@NirantK/best-of-python3-6-f-strings-41f9154983e
+
 #+begin_src python
 
 ## repr and eval: return the name of an object or evaluate it
@@ -1557,32 +1593,98 @@ g._legend.remove()
 plt.show()
 #+end_src python
 
-* Charts
-Should use Seaborn whenever possible: much better than matplotlib
-** Best example
-#+begin_src python
-ax = plt.subplot(111, xlabel='x', ylabel='y', title='title')
-for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
-             ax.get_xticklabels() + ax.get_yticklabels()):
-    item.set_fontsize(20)
+** Manage legend point size in scatterplot
+# No labels
+fig = sns.scatterplot(dwr['gdp_pop'], dwr['trade_gdp'],
+                      hue=dwr['Cluster'],
+                      style=dwr['Cluster'],
+                      s=300, 
+                      palette="Set1")
 
+#fig.legend_.remove()
 
-# Or using the standard pyplot interface
-# Big font for export in Orgmode/Word
-fig = plt.figure(figsize=(1.6180*7, 7))
-fonts_d = {'family':'Arial', 'color':'#004c97', 'fontweight':'bold'}
-plt.xlabel('xlabel', labelpad=30, fontsize=60, **fonts_d)
-plt.ylabel('ylabel', labelpad=30, fontsize=60, **fonts_d)
-plt.title('My title', y=1.02, fontsize=72, **fonts_d)
-plt.xticks(fontsize=48, **fonts_d)
-plt.yticks(fontsize=48, **fonts_d)
-plt.setp(plt.legend(loc='best').get_texts(),
-         fontsize=16, **fonts_d) # For legend font
-plt.tight_layout()
+# Arrange the legend
+plt.xlabel('GDP per capita', labelpad=20)
+plt.ylabel('Trade openess', labelpad=20)
+
+# Manage legend order, as well as size of points of the scatter plot
+handles, labels = plt.gca().get_legend_handles_labels()
+handles_d = dict(zip(labels, handles))
+new_labels = sorted(set(dwr['Cluster']))
+new_handles = [handles_d[l] for l in new_labels]
+lgnd = plt.legend(new_handles, new_labels)
+for handle in lgnd.legendHandles:
+    handle.set_sizes([300])
+
+plt.title('Agglomerative Clustering: 5 Country Groups', y=1.02)
 plt.show()
 
+** Show values on barplot
+https://stackoverflow.com/questions/43214978/seaborn-barplot-displaying-values
+def show_values_on_bars(axs, h_v="v", space=0.4):
+    def _show_on_single_plot(ax):
+        if h_v == "v":
+            for p in ax.patches:
+                _x = p.get_x() + p.get_width() / 2
+                _y = p.get_y() + p.get_height()
+                value = int(p.get_height())
+                ax.text(_x, _y, value, ha="center") 
+        elif h_v == "h":
+            for p in ax.patches:
+                _x = p.get_x() + p.get_width() + float(space)
+                _y = p.get_y() + p.get_height()
+                value = int(p.get_width())
+                ax.text(_x, _y, value, ha="left")
 
+    if isinstance(axs, np.ndarray):
+        for idx, ax in np.ndenumerate(axs):
+            _show_on_single_plot(ax)
+    else:
+        _show_on_single_plot(axs)
+
+* Charts
+Should use Seaborn whenever possible: much better than matplotlib
+** Best example with secondary y
+#+begin_src python
+# Figure layout
+sns.set(style='white', font_scale=4, palette='deep', font='Arial')
+
+# Prepare the plot
+fig, ax1 = plt.subplots(1, 1)
+ax2 = ax1.twinx() # Secondary axis
+ax1.plot(dfs.index, dfs['pls_fci'], label='FCI (PLS)',
+         ls='-', lw=3, color='navy')
+ax2.plot(dfs.index, dfs['NFCI'], label='FCI (Chicago Fed)',
+         ls='--', lw=3, color='firebrick')
+
+# Legend management (annoying because of the secondary y)
+h1, l1 = ax1.get_legend_handles_labels()
+h2, l2 = ax2.get_legend_handles_labels()
+ax1.legend(h1+h2, l1+l2, loc='best')
+
+# Labels
+ax1.set_xlabel('')
+ax1.set_ylabel('Score', labelpad=20)
+ax2.set_ylabel('', labelpad=20)
+
+# Title
+pl1 = round(pls_corr,2)
+plt.title(f'Corr(PLS FCI, Chicago Fed FCI): {pl1}', y=1.02)
+
+# Layout
+fig.set_size_inches(25, 15)
+fig.tight_layout()
+#plt.show()    
+
+# Save
+comp_f = os.path.join('output', 'step_2_pls', 'pls_vs_chicago.png')
+fig.savefig(comp_f, bbox_inches='tight', dpi=300)
 #+end_src python
+
+** Manage ticks
+lim = axes[1].get_ylim() # Retrieve the limit
+axes[1].set_yticks([0.05, 0.5, 1]) # Fit my own ticks: often better
+axes[1].set_ylim(lim) # Need to reset the limit
 
 ** Fan chart
 
@@ -1610,8 +1712,68 @@ for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
              ax.get_xticklabels() + ax.get_yticklabels()):
     item.set_fontsize(20)
 
-
+# Manage frequency of xticks & make sure the last one always visible
+if xticks_freq:
+    start, end = ax.get_xlim()
+    t_seq = np.append(np.arange(start, end-5, xticks_freq), end)
+    ax.xaxis.set_ticks(t_seq)
+        
 plt.show()
+
+** Beautiful Cleveland Plot
+
+https://stats.stackexchange.com/questions/423735/what-is-the-name-of-this-plot-that-has-rows-with-two-connected-dots
+#+begin_src python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+
+
+sns.set(style="whitegrid")  # set style
+
+data = io.StringIO(""""Country"  1990  2015
+"Russia" 71.5 101.4
+"Canada" 74.4 102.9
+"Other non-OECD Europe/Eurasia" 60.9 135.2
+"South Korea" 127.0 136.2
+"China" 58.5 137.1
+"Middle East" 170.9 158.8
+"United States" 106.8 169.0
+"Australia/New Zealand" 123.6 170.9
+"Brazil" 208.5 199.8
+"Japan" 181.0 216.7
+"Africa" 185.4 222.0
+"Other non-OECD Asia" 202.7 236.0
+"OECD Europe" 173.8 239.9
+"Other non-OECD Americas" 193.1 242.3
+"India" 173.8 260.6
+"Mexico/Chile" 221.1 269.8""")
+                   
+df = pd.read_csv(data, sep="\s+", quotechar='"')
+df = df.set_index("Country").sort_values("2015")
+df["change"] = df["2015"] / df["1990"] - 1
+
+
+plt.figure(figsize=(12,6))
+y_range = np.arange(1, len(df.index) + 1)
+colors = np.where(df['2015'] > df['1990'], '#d9d9d9', '#d57883')
+plt.hlines(y=y_range, xmin=df['1990'], xmax=df['2015'],
+           color=colors, lw=10)
+plt.scatter(df['1990'], y_range, color='#0096d7', s=200, label='1990', zorder=3)
+plt.scatter(df['2015'], y_range, color='#003953', s=200 , label='2015', zorder=3)
+for (_, row), y in zip(df.iterrows(), y_range):
+    plt.annotate(f"{row['change']:+.0%}", (max(row["1990"], row["2015"]) + 4, y - 0.25))
+plt.legend(ncol=2, bbox_to_anchor=(1., 1.01), loc="lower right", frameon=False)
+
+plt.yticks(y_range, df.index)
+plt.title("Energy productivity in selected countries and regions, 1990 and 2015\nBillion dollars GDP per quadrillion BTU", loc='left')
+plt.xlim(50, 300)
+plt.gcf().subplots_adjust(left=0.35)
+plt.tight_layout()
+plt.show()
+#+end_src python
 
 ** Matplotlib
 #+begin_src python
@@ -1661,6 +1823,14 @@ ax.plot(d_r2_factors)
 ax.set_ylim(0, 1)
 ax.xaxis.set_major_locator(mdates.YearLocator(1, month=1, day=1))
 plt.show()
+
+# Tick about the last observation
+#plt.xticks(list(dmss.index[1:-1][::2]) + [dmss.index[-1]],**fonts_d)
+
+# Or this method:
+xticks = list(ax.get_xticks())[:-1] + [len(dht.columns)-0.5]
+xlabels = [dht.columns[int(x)] for x in xticks] 
+plt.xticks(xticks, xlabels, **fonts_d)
 
 #rotates the tick labels automatically
 fig.autofmt_xdate()
@@ -1959,3 +2129,18 @@ import docx   ## Pay attention: need to install python-docx and not docx !!
 - Rammstein Links 123
 - Clubbed to death (Matrix theme song)
 - Requiem for a dream
+* Sets
+>>> a = set('abracadabra')
+>>> b = set('alacazam')
+>>> a                                  # unique letters in a
+{'a', 'r', 'b', 'c', 'd'}
+>>> a - b                              # letters in a but not in b
+{'r', 'd', 'b'}
+>>> a | b                              # letters in a or b or both
+{'a', 'c', 'r', 'd', 'b', 'm', 'z', 'l'}
+>>> a & b                              # letters in both a and b
+{'a', 'c'}
+>>> a ^ b                              # letters in a or b but not both
+{'r', 'd', 'b', 'm', 'z', 'l'}
+* Alternative plotting packages
+https://altair-viz.github.io/gallery/index.html
