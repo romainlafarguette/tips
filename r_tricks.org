@@ -3,40 +3,83 @@
 #+EMAIL:     rlafarguette@imf.org
 
 
-* Weird comment behaviour of comments in Emacs
-Use ### instead of #
-### Left align comments
-## Block align comments
-One is right-align comments
-
-https://stackoverflow.com/questions/54755899/disable-ess-fancy-comments-with-r
-
-* Get the name of an object pass to a function
-
-deparse(substitute(group_list))
-
-* Eval string expression
-
-mylist = c(1,2,3)
-eval(parse(text='mylist'))
-
-* Data frames
+* Manipulations: loops, strings, etc.
+** Loop in R with list container
 #+begin_src R
-
-## Sort dataframes on two variables
-dn = dn[with(dn, order(country, date_m)), ] ## Order the frame
-
-
+summary_list <- list() # Initialize the list
+for (ftau in ql){
+    res = rq(formula=y_form, data=dfc, tau=ql, R=yR, r=yr, method="fnc")
+    summary = summary.rq(res, se='boot')
+    coeffs = summary$coefficients
+    tcoeffs = cbind(tau=ftau, coeffs)
+    summary_list[[glue('{ftau}')]] <- tcoeffs
+}
 #+end_src
 
-* Variables
+** Equivalent of fstring in R
+#+begin_src R
+library(glue)
+myname = 'Romain'
+glue('My name is {myname}')
+#+end_src
+** Eval string expression
+#+begin_src R
+mylist = c(1,2,3)
+eval(parse(text='mylist'))
+#+end_src
+
+
+
+* Data frames
+** Sort
+#+begin_src R
+### Sort dataframes on two variables
+dn = dn[with(dn, order(country, date_m)), ] ## Order the frame
+#+end_src
+
+** Add a column at the beginning of the dataframe
+#+begin_src R
+### Add a column at the beginning of the dataframe
+cbind(tau=0.05, dataframe)
+#+end_src
+
+** Concatenate a list of dataframes
+#+begin_src R
+do.call(rbind, summary_list)
+#+end_src
+
+** Lag a variable
 #+begin_src R
 ## Lag a variable
 library(DataCombine)
 dn = slide(dn, Var='rgdpQg', GroupVar='country', NewVar='rgdpQg_lag', slideBy=-1)
 #+end_src
 
-* Install package from Emacs
-install.packages('strucchange', repos='http://cran.us.r-project.org')
 
+
+* Object inspection
+** Object Type in R
+#+begin_src R
+typeof(thistruc)
+#+end_src
+** Inspect an object in R
+#+begin_src R
+names(object) # List of objects
+object$attribute # Access the attribute within object
+#+end_src
+** Eval name to pass to a function
+#+begin_src R
+deparse(substitute(group_list))
+#+end_src
+
+* Emacs related issues
+** Install package from Emacs
+install.packages('strucchange', repos='http://cran.us.r-project.org')
+** Weird behaviour of comments in Emacs
+Use ### instead of #
+### Left align comments
+## Block align comments
+One is right-align comments
+
+https://stackoverflow.com/questions/54755899/disable-ess-fancy-comments-with-r
 
