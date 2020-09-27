@@ -1,9 +1,9 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-08-16 20:12:40 Romain"
+#+DATE:      Time-stamp: "2020-09-24 00:03:41 RLafarguette"
 
-* Interesting sources
+* Interesting resources
 ** For beginners
 https://www.learndatasci.com/tutorials/python-pandas-tutorial-complete-introduction-for-beginners/
 https://www.dataschool.io/python-pandas-tips-and-tricks/
@@ -12,6 +12,10 @@ https://automatetheboringstuff.com/
 
 ** Advanced users
 https://www.kevinsheppard.com/teaching/python/notes/
+
+http://web.pdx.edu/~crkl/ceR/ (lot of examples)
+
+https://pierreh.eu/tag/matplotlib/ (for matplotlib)
 
 * Local variables
 # C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
@@ -569,34 +573,46 @@ d_out = pd.DataFrame(index=[str(CURRENCY)], columns=["share_onshore","share_fina
 ## Read excel and skip some rows
 pd.read_excel("mydata.xlsx",sheetname="firstsheet",skiprows=[1,3,5])
 
-## Encoding issues, mostly on windows
+# Encoding issues, mostly on windows
 dcables = pd.read_csv(path_22 + 'cablesfinal.csv', encoding = 'latin1')
 
-## Read .out files: need to precise the names because the number of columns is not constant across rows
+# Read .out files: need to precise the names because the number of columns is not constant across rows
 df = pd.read_csv(raw_path + "ehd_5p0-20150103.out", header=None, names=["Date","Time","Pair","Num1","Num2","Num3","Num4","Num5","Num6","Num7"])
 
-## Describe the dataset and manipulate the count values (only non-missing)
+# Describe the dataset and manipulate the count values (only non-missing)
 dg_missing = dg.describe(); dgt = dg_missing.loc[dg_missing.index == "count"].transpose()
 dg_columns_keep = list(dgt[dgt['count'] > 0].index)
 
-## Access multilevel dataframes
+# Count missing observations in columns of a datafram
+df.isna().sum()
+
+# Access multilevel dataframes
 d["date"] = d.index.get_level_values("date")
 d["date"] = d.index.get_level_values(level=0)
 
-## Resampling
+# Resampling
 dw.resample('Q', label='right').mean()
-dmn = dwq.resample('M', label='right') ## Without computing anything
+dmn = dwq.resample('M', label='right') # Without computing anything
 
-## Resample at the quarterly frequency for every country
+# Resample at the quarterly frequency for every country
 dn = dn.set_index(dn.date_m)
 dng = dn.groupby(['country'])
 dngc = dng.resample('Q', label='right').mean()
 
-## Resample differently on variables
+# Resample differently on variables
 df.resample('1H').agg({'openbid': 'first', 
                                  'highbid': 'max', 
                                  'lowbid': 'min', 
                                  'closebid': 'last'})
+
+# Very fast windsorization, data clip or trim. Super efficient
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
+
+df2 = df[~((df < (Q1 - 1.5 * IQR))|
+             (df > (Q3 + 1.5 * IQR))).any(axis=1)].copy()
+
 
 ## Recursive merging
 dco = pd.DataFrame(columns=['iso3','year'])
@@ -821,19 +837,15 @@ df               = pd.read_sql(sql_expression, raw_engine, params={'date': dt.da
 #+begin_src python
 import statsmodels as sm
 # Nice dataset on US macro quarterly data
-df = sm.datasets.macrodata.load_pandas().data 
-df['date'] = df[['year', 'quarter']].apply(lambda row:
-                                           date(int(row[0]), int(3*row[1]), 1),
-                                           axis=1) + pd.offsets.QuarterEnd()
-df = df.set_index(df['date'])
+df = sm.datasets.macrodata.load_pandas().data.copy()
 
-df['realgdp_yoy'] = df['realgdp'].rolling(4).sum().pct_change(4)
+# Create a date index with end of quarter convention
+dates_l = [f'{y:.0f}-Q{q:.0f}' for y,q in zip(df['year'], df['quarter'])]
+df = df.set_index(pd.to_datetime(dates_l) + pd.offsets.QuarterEnd())
 
-df['y_t'] = df['realgdp_yoy'].copy()
-df['y_fwd_4'] = df['y_t'].shift(-4)
-
-depvar = ['y_t']
-indvars_l = ['y_fwd_4', 'realint', 'tbilrate', 'unemp']
+# Clean some variables
+df['rgdp_growth'] = df['realgdp'].rolling(4).sum().pct_change(4)
+df = df.rename(columns={'infl':'inflation', 'unemp':'unemployment'})
 
 #+end_src python
 
@@ -1428,6 +1440,12 @@ df['reaction_time'] = (df.timestamp - df.matching_timestamp) / np.timedelta64(1,
 ## Create a timestamp Year, Month, Day, Hour, Minute, Second
 truc = dt.datetime(2015,1,6,15,0,0) ; print(truc)
 
+# Nearest date
+def nearest_date(items_l, pivot):
+    """ Return the nearest date in items BEFORE the pivot"""
+    return min([i for i in items_l if i < pivot], key=lambda x: abs(x - pivot))
+
+
 ## Format on date + time (also useful for rounding)
 ### At the microsecond
 datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -1643,7 +1661,9 @@ def show_values_on_bars(axs, h_v="v", space=0.4):
         _show_on_single_plot(axs)
 
 * Charts
-Should use Seaborn whenever possible: much better than matplotlib
+** Excellent references
+https://www.machinelearningplus.com/plots/top-50-matplotlib-visualizations-the-master-plots-python/
+
 ** Best example with secondary y
 #+begin_src python
 # Figure layout
@@ -1685,6 +1705,11 @@ fig.savefig(comp_f, bbox_inches='tight', dpi=300)
 lim = axes[1].get_ylim() # Retrieve the limit
 axes[1].set_yticks([0.05, 0.5, 1]) # Fit my own ticks: often better
 axes[1].set_ylim(lim) # Need to reset the limit
+
+# Manage the ticks
+#ax.set_yticks(list(ax.get_yticks()) + [new_tick]) # With old ones
+ax.set_yticks([0, 25, 50, 100] + [new_tick]) # With fixed list
+ax.get_yticklabels()[-1].set_color('red') # Change the color on 1
 
 ** Fan chart
 
@@ -1797,6 +1822,11 @@ ax.set_yticks([0,10,50,150])
 plt.show()
 
 
+# Reset matplotlib style
+import matplotlib as mpl
+mpl.rcParams.update(mpl.rcParamsDefault)
+
+
 # Cool horizontal legend
 ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
           ncol=3, fancybox=True, shadow=True)
@@ -1867,12 +1897,16 @@ dnyq.plot(kind='bar', stacked=True, ax=axes)
 ticklabels = dnyq.index.strftime('%Y-%m')
 axes.xaxis.set_major_formatter(ticker.FixedFormatter(ticklabels))
 
-#show only each xth label, another are not visible
+# show only each xth label, other are not visible
 spacing = 3
 visible = axes.xaxis.get_ticklabels()[::spacing]
 for label in axes.xaxis.get_ticklabels():
     if label not in visible:
         label.set_visible(False)
+
+# Very convenient automatic formatting
+fig.autofmt_xdate() 
+
 
 plt.show()
 plt.close('all')
@@ -1880,6 +1914,31 @@ plt.close('all')
 #+end_src python
 
 ** Subplots
+
+# Very helpful: ravel to iterate subplots in a loop
+
+#+begin_src python
+fig, axs = plt.subplots(nrows=num_rows, ncols=num_cols, sharex=True)
+
+axs = axs.ravel() # Very helpful !!
+
+for i, var in enumerate(var_l):
+  # Add every single subplot to the figure with a for loop
+  # ax = fig.add_subplot(num_rows, num_cols, position_idx[k])
+  dcv = dc.loc[var, :].sort_values(by='tau')
+  axs[i].plot(dcv.tau, dcv.coeff, lw=3, color='navy')
+  axs[i].plot(dcv.tau, dcv.upper, ls='--', color='blue')
+  axs[i].plot(dcv.tau, dcv.lower, ls='--', color='blue')      
+  axs[i].axhline(y=0, color='black', lw=0.8)
+  
+# Remove extra charts
+for i in range(len(var_l), len(axs)): 
+    axs[i].set_visible(False) # to remove last plot
+
+
+plt.show()
+#+end_src python
+
 #+begin_src python
 fig, ax = plt.subplots(nrows=2, ncols=2)
 
@@ -2021,6 +2080,39 @@ hm = HeatMap(share_pivoted_nna2, title="FX offshore share heatmap for selected c
 show(hm)
 
 #+end_src
+
+** Table to chart
+#+begin_src python
+# Export a Table into Matplotlib
+def plot_table(df, align='center'):
+    """ Plot a table as a matplotlib object """
+    # Initialize
+    fig, ax = plt.subplots()
+
+    # hide axes
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    ax.axis('tight')
+
+    # Populate
+    xtable = ax.table(cellText=df.values, colLabels=df.columns, loc='center',
+                      rowLabels=df.index, cellLoc=align)
+
+    # Layout
+    xtable.set_fontsize(34)
+    xtable.scale(1, 4)
+        
+    # Cut useless margins
+    #fig.tight_layout()
+    return(fig)
+
+
+df = pd.DataFrame(np.random.randn(10, 4), columns=list('ABCD'))
+plot_table(df)
+plt.subplots_adjust(left=0.3, wspace=0.5, hspace=0.5)
+plt.show()
+#+end_src
+
 
 * Custom functions
 
