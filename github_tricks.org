@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-03-22 12:09:55 Romain"
+#+DATE:      Time-stamp: "2020-09-21 22:57:15 Romain"
 
 * Update the local rep from the remote repo
 
@@ -81,6 +81,39 @@ git pull origin master
 git branch [branch-name]
 
 
-
 * Remove deleted files
 git add -u
+* Submodules
+
+# First (local name can be ignored)
+git submodule add <github link> <local name>
+
+# Then to update (don't use --init as I noticed it creates issues)
+git submodule update --recursive
+
+# In case of issue: realign the commits (this will discard the commits !)
+git submodule foreach git reset --hard
+
+# In case of big problems: 
+
+# Remove a submodule
+1. Delete the relevant line from the . gitmodules file.
+2. Delete the relevant section from . git/config . (very important)
+3. Run git rm --cached -r path_to_submodule (no trailing slash).
+4. Commit and delete the now untracked submodule files.
+
+# Solve recursive issues
+git submodule update --force --recursive --remote
+
+
+
+* Useful when can not add a folder
+https://danielmiessler.com/blog/git-modified-untracked/
+- git rm --cached /myfolder
+- rename the folder
+- git status => check if the new folder is in
+- put the name back
+- git status, git add /myfolder, git commit
+
+
+
