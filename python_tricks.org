@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-09-24 00:03:41 RLafarguette"
+#+DATE:      Time-stamp: "2021-05-22 13:25:45 RLafarguette"
 
 * Interesting resources
 ** For beginners
@@ -16,6 +16,13 @@ https://www.kevinsheppard.com/teaching/python/notes/
 http://web.pdx.edu/~crkl/ceR/ (lot of examples)
 
 https://pierreh.eu/tag/matplotlib/ (for matplotlib)
+https://github.com/pierre-haessig/french-elec2/blob/master/Dotplots_Powersys.ipynb
+
+https://nextjournal.com/a/LZwQMQF3DnkS7FPZhnPuk?change-id=ChwcyR4BwCwJJX3xKfCSJt
+
+
+Intuitive guide to copulas
+https://twiecki.io/blog/2018/05/03/copulas/
 
 * Local variables
 # C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
@@ -59,6 +66,13 @@ dfw.index.get_level_values('bank')
 dlong = pd.melt(dwide,
 value_vars=["Under a year", "Over a year"],
 id_vars=["bank", "fdate"])
+
+* Install a package from Github (works at the Fund)
+Pay attention to have the right clone link (go to the green button)
+
+git clone --depth=1 https://github.com/rlabbe/filterpy.git
+cd filterpy
+python setup.py install
 
 * Modules, classes and functions
 #+begin_src python
@@ -560,9 +574,9 @@ xl_file_l = [f for f in xl_all_l if not f.stem.startswith('~')]
 
 ## Improve columns display (pandas options)
 pd.set_option('display.expand_frame_repr', False)
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 8)
-pd.set_option('display.width', 100)
+pd.set_option('display.max_rows', 20)
+pd.set_option('display.max_columns', 5)
+pd.set_option('display.width', 20)
 
 # Change row index name
 dp.index.names = ['date']
@@ -628,6 +642,9 @@ dff.loc[index_value] # Transform in series
 # Mix iloc and loc
 dres.iloc[[5], dres.columns.get_indexer(vars_l)] 
 # Note that [[5]] will get a dataframe
+
+# Closest index to a date
+dfxr.index.get_loc(date(2016, 2, 2),method='nearest') 
 
 # Create a single row pandas dataframe
 pd.DataFrame([[1,2]], columns=['a', 'b'])
@@ -835,7 +852,7 @@ df               = pd.read_sql(sql_expression, raw_engine, params={'date': dt.da
 * Data example
 
 #+begin_src python
-import statsmodels as sm
+import statsmodels.api as sm
 # Nice dataset on US macro quarterly data
 df = sm.datasets.macrodata.load_pandas().data.copy()
 
@@ -1625,6 +1642,10 @@ fig = sns.scatterplot(dwr['gdp_pop'], dwr['trade_gdp'],
 plt.xlabel('GDP per capita', labelpad=20)
 plt.ylabel('Trade openess', labelpad=20)
 
+# Legend with shorter line
+# 2 is the default value of handlelength
+ax1.legend(fontsize=ffontsize, loc='best', framealpha=0, handlelength=1) 
+
 # Manage legend order, as well as size of points of the scatter plot
 handles, labels = plt.gca().get_legend_handles_labels()
 handles_d = dict(zip(labels, handles))
@@ -1636,6 +1657,14 @@ for handle in lgnd.legendHandles:
 
 plt.title('Agglomerative Clustering: 5 Country Groups', y=1.02)
 plt.show()
+
+
+# With autofont and outside the frame
+fontsize='xx-small'
+ax.legend(outflows_l, fontsize='xx-small', framealpha=0,
+          bbox_to_anchor=(1.05, 1), loc='upper left', 
+          handlelength=1)
+
 
 ** Show values on barplot
 https://stackoverflow.com/questions/43214978/seaborn-barplot-displaying-values
@@ -1745,6 +1774,13 @@ if xticks_freq:
         
 plt.show()
 
+# Manage xticks frequency with dates, take one every 32
+ax1.set_xticks(df.index[::32])
+ax1.set_xticklabels([str(x)[:4] for x in df.index[::32]], rotation=45)
+
+# To hide a legend
+axes[0].legend().set_visible(False)
+
 ** Beautiful Cleveland Plot
 
 https://stats.stackexchange.com/questions/423735/what-is-the-name-of-this-plot-that-has-rows-with-two-connected-dots
@@ -1820,6 +1856,14 @@ ax.set_xticks([0,10,50,150])
 ax.set_yticks([0,10,50,150])
 
 plt.show()
+
+
+# Force integer ax xticks
+from matplotlib.ticker import MaxNLocator                # Locator
+ax4.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax1.set_xticks(cond_5_mean.index[::32])
+ax1.set_xticklabels([str(x)[:4] for x in cond_5_mean.index[::32]], rotation=45)
 
 
 # Reset matplotlib style
@@ -2113,7 +2157,6 @@ plt.subplots_adjust(left=0.3, wspace=0.5, hspace=0.5)
 plt.show()
 #+end_src
 
-
 * Custom functions
 
 ** Regressions
@@ -2236,3 +2279,103 @@ import docx   ## Pay attention: need to install python-docx and not docx !!
 {'r', 'd', 'b', 'm', 'z', 'l'}
 * Alternative plotting packages
 https://altair-viz.github.io/gallery/index.html
+* Numba
+
+** Errors
+
+   Don't give the type, numba does it well
+   Especially, numba is confused if you have 1D array and float in the same line
+
+
+** Types declaration
+# Good example
+# https://nyu-cds.github.io/python-numba/02-signatures/
+
+
+# from numba import jit, int32, float64
+
+# # float64(int32, int32) is the function’s signature specifying
+# # a function that takes two 32-bit integer arguments
+# # and returns a double precision float
+# @jit(float64(int32, int32))
+# def f(x, y):
+#     # A somewhat trivial example
+#     return (x + y) / 3.14
+
+
+# # Example: type declaration with tuple
+# # (1.0, 1.0) says that we are getting a tuple
+# # nb.float32 that we are outputing floating number
+# @nb.jit(nb.typeof((1.0,1.0))(nb.float32),nopython=True)
+# def f(a):
+#   return a,a
+
+# f(4.59845)
+
+# #%% Examples
+# @nb.njit
+# def f(types=(nb.int8[::1], nb.float64[::1])):
+#     a = nb.typed.List.empty_list(types[0])
+#     b = nb.typed.List.empty_list(types[1])
+#     # and so on...
+    
+* Types declaration
+def annualize_return(percent: float, months: int) -> float:
+    """Return the annualized return percentage given the holding return percentage and the number of months held.
+
+    >>> annualize_return(1.5, 1)  # doctest: +ELLIPSIS
+    19.56...
+    >>> annualize_return(6.1, 3)  # doctest: +ELLIPSIS
+    26.72...
+    >>> annualize_return(30, 12)  # doctest: +ELLIPSIS
+    30.00...
+    >>> annualize_return(30, 15)  # doctest: +ELLIPSIS
+    23.35...
+    >>> annualize_return(float('nan'), 15)
+    nan
+    >>> annualize_return(0, 0)
+    0
+
+    References:
+        https://en.wikipedia.org/wiki/Holding_period_return
+        https://www.wikihow.com/Calculate-Annualized-Portfolio-Return
+    """
+    # Ref: https://stackoverflow.com/a/52618808/
+    if months == 0:
+        return percent
+    rate = percent / 100
+    years = months / 12
+    rate = ((rate + 1)**(1 / years)) - 1
+    percent = rate * 100
+    return percent
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod(verbose=True, exclude_empty=True)
+* Install special fonts for Matplotlib
+1. Go on:
+https://www.fontsquirrel.com/fonts/tex-gyre-heros
+
+2. Extract the files from the folder
+
+3. Windows search: type Fonts => will open settings
+
+4. Drag down the otf font in the setting windows
+
+# Check matplolib fonts
+import matplotlib.font_manager
+flist = matplotlib.font_manager.get_fontconfig_fonts()
+
+names_l = list()
+for fname in flist:
+    try:
+        name = matplotlib.font_manager.FontProperties(fname=fname).get_name()
+        names_l.append(name)
+    except:
+        pass
+
+print(names_l[:50]) # Very long !!
+
+
+
