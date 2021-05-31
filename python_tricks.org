@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2021-05-22 13:25:45 RLafarguette"
+#+DATE:      Time-stamp: "2021-05-31 15:01:19 RLafarguette"
 
 * Interesting resources
 ** For beginners
