@@ -4,6 +4,10 @@
 
 
 * Manipulations: loops, strings, etc.
+** Lists
+#+begin_src R
+mylist = c(1,2,3)
+#+end_src
 ** Loop in R with list container
 #+begin_src R
 summary_list <- list() # Initialize the list
@@ -28,7 +32,10 @@ mylist = c(1,2,3)
 eval(parse(text='mylist'))
 #+end_src
 
-
+** Manipulate paths
+#+begin_src R
+file.path('data', 'clean', 'step_005_coeff_frame_capital_constrained.csv')
+#+end_src
 
 * Data frames
 ** Sort
@@ -51,11 +58,47 @@ do.call(rbind, summary_list)
 ** Lag a variable
 #+begin_src R
 ## Lag a variable
-library(DataCombine)
-dn = slide(dn, Var='rgdpQg', GroupVar='country', NewVar='rgdpQg_lag', slideBy=-1)
+library(Hmisc) # For the Lag function
+dft$output_gap_lag_h = Lag(df$output_gap, horizon)
 #+end_src
 
+** Change columns and rows names
+#+begin_src R
+colnames(fci_coeffs_mat)[colnames(fci_coeffs_mat)=='(Intercept)'] = "Intercept"
+rownames(fci_coeffs_mat) = gsub('tau= ', '', rownames(fci_coeffs_mat))
+#+end_src 
 
+** Sub-select variables and remove rows with missing values
+#+begin_src R
+main_var_l <- c("economic_activity", "inflation", "exchange_rate_yoy")
+df = na.omit(df[main_var_l])
+#+end_src 
+
+** Load dataframes similarly as pandas
+#+begin_src R
+library(foreign)
+
+df <- read.csv(file='data/clean/step_002_ecb_clean.csv',
+               stringsAsFactors=FALSE)
+df$date <- as.Date(df$date,format="%Y-%m-%d")
+rownames(df) <- df$date
+#+end_src
+
+* Formulas
+** Regress on all remaining variables
+#+begin_src R
+### Trick: "." in a formula means all remaining variables
+fit_lp = selm(cbind(output_gap, inflation, exchange_rate) ~ .,
+              family="ST", data=dft)
+#+end_src
+
+* Dates management
+** Add months to a date
+#+begin_src R
+library(lubridate)
+cond_date = ymd(rownames(cond_vector))
+proj_date = cond_date %m+% months(horizon)
+#+end_src
 
 * Object inspection
 ** Object Type in R
@@ -73,8 +116,6 @@ deparse(substitute(group_list))
 #+end_src
 
 * Emacs related issues
-** Install package from Emacs
-install.packages('strucchange', repos='http://cran.us.r-project.org')
 ** Weird behaviour of comments in Emacs
 Use ### instead of #
 ### Left align comments
@@ -83,3 +124,7 @@ One is right-align comments
 
 https://stackoverflow.com/questions/54755899/disable-ess-fancy-comments-with-r
 
+* Install packages
+#+begin_src R
+install.packages('forecast', repos='http://cran.us.r-project.org')
+#+end_src
