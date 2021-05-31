@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2020-09-21 22:57:15 Romain"
+#+DATE:      Time-stamp: "2021-05-15 20:09:02 RLafarguette"
 
 * Update the local rep from the remote repo
 
@@ -47,11 +47,18 @@ git commit -m "This is my commit comment!"
 ** Regular push
 git push -u origin master
 
-** First time, add origin
+** First  time, add origin
 git remote add origin https://github.com/cubeton/mynewrepository.git
 
 ** Push a branch on Github
 git push origin my-new-branch
+
+** Solve ref issue
+git push origin HEAD:master
+
+** Force a push
+git push --force
+git push --set-upstream origin main --force
 
 * Git ignore
 Create a .gitignore file somewhere with:
@@ -116,4 +123,27 @@ https://danielmiessler.com/blog/git-modified-untracked/
 - git status, git add /myfolder, git commit
 
 
+
+
+* Login problem with command line
+Just modify the config file in .git folder by including pwd in url:
+The pwd should be the personal token access (developer settings => security)
+
+
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+
+[user]
+        email = romain.lafarguette@gmail.com
+        user = romainlafarguette
+
+[branch "main"]
+[remote "origin"]
+        url = https://romainlafarguette:TOKEN@github.com/romainlafarguette/waemu8solvency.git        
+	fetch = +refs/heads/*:refs/remotes/origin/*
 
