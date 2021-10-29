@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Github
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2021-05-15 20:09:02 RLafarguette"
+#+DATE:      Time-stamp: "2021-06-21 17:40:04 RLafarguette"
 
 * Update the local rep from the remote repo
 
@@ -84,9 +84,13 @@ auto/
 * Pull from Github (an already existing project, else clone)
 git pull origin master
 
+** If following-untracked-working-tree-files-would-be-overwritten-by-merge
+git add * 
+git stash
+git pull
+
 * Create a branch
 git branch [branch-name]
-
 
 * Remove deleted files
 git add -u
