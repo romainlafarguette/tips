@@ -1,7 +1,7 @@
 #+TITLE:     Tips for Python
 #+AUTHOR:    Romain Lafarguette
 #+EMAIL:     rlafarguette@imf.org
-#+DATE:      Time-stamp: "2021-05-31 15:01:19 RLafarguette"
+#+DATE:      Time-stamp: "2021-10-29 13:14:05 RLafarguette"
 
 * Interesting resources
 ** For beginners
@@ -24,6 +24,16 @@ https://nextjournal.com/a/LZwQMQF3DnkS7FPZhnPuk?change-id=ChwcyR4BwCwJJX3xKfCSJt
 Intuitive guide to copulas
 https://twiecki.io/blog/2018/05/03/copulas/
 
+* Useful functions
+#+begin_src python
+from statsmodels.distributions.empirical_distribution import ECDF
+def inv_ecdf(sample): 
+    sample_edf = ECDF(sample)
+    slope_changes = sorted(set(sample))
+    spl_edf_val_at_slope_chg = [sample_edf(item) for item in slope_changes]
+    inv_ecdf = interp1d(spl_edf_val_at_slope_chg, slope_changes)
+    return(inv_ecdf)
+#+end_src python
 * Local variables
 # C:\Users\rlafarguette\AppData\Roaming\Python\Python36\Scripts
 * Data organization
@@ -291,6 +301,35 @@ class Sub( Super ):
 x= Super( 2.7, 3.1 )
 y= Sub( "green", 7, 6 )
 
+# A concrete example: augment a Linear Regression
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+class LogitRegression(LinearRegression):
+    def fit(self, x, p):
+        p = np.asarray(p)
+        y = np.log(p / (1 - p))
+        return super().fit(x, y)
+
+    def predict(self, x):
+        y = super().predict(x)
+        return 1 / (np.exp(-y) + 1)
+
+if __name__ == '__main__':
+    # generate example data
+    np.random.seed(42)
+    n = 100
+    x = np.random.randn(n).reshape(-1, 1)
+    noise = 0.1 * np.random.randn(n).reshape(-1, 1)
+    p = np.tanh(x + noise) / 2 + 0.5
+
+    model = LogitRegression()
+    model.fit(x, p)
+
+    print(model.predict([[-10], [0.0], [1]]))
+    # [[  2.06115362e-09]
+    #  [  5.00000000e-01]
+    #  [  8.80797078e-01]]
 
 
 ###############################################################################
@@ -327,6 +366,172 @@ def __init__(self, NpSampler, exog_cond_d):
 
 
 #+end_src
+
+* Dataclass
+
+Very nice explanation: https://stackoverflow.com/questions/47955263/what-are-data-classes-and-how-are-they-different-from-common-classes
+
+
+
+#+begin_src python
+
+### Excellent tuto
+# https://realpython.com/python-data-classes/
+
+
+###############################################################################
+#%% Inheritance principle and passing attributes
+###############################################################################
+# Differentiate between :
+# Inheritance: gives an empty class with methods from parents
+# Instantiation with super to "load" the parent with specific attributes
+
+@dataclass
+class Parent:
+    truc: int=3
+    bidule: str='bidule'
+
+    def print_bidule(self):
+        print(self.bidule)
+
+@dataclass
+class Enfant(Parent):
+    parent: Any='parent class' # Need it to keep the instances
+    chouette: str='chouette'
+
+    def __post_init__(self):
+        # Initialize parents' attributes with super and pass it to Enfant
+        super().__init__(self.parent.truc, self.parent.bidule)
+        
+    def test(self):
+        print('good job')
+
+
+# Create the master class        
+papa = Parent(3, 'jill')
+
+## PAY ATTENTION: YOU NEED TO INSTANTIATE CHILDREN WITH PARENTS ATTRIBUTES
+billa = Enfant(4, 'bidule1', papa, 'petite chouette') # Need to instantiate all
+billb = Enfant(parent=papa, chouette='petite chouette') # use default val
+
+# billa and billb are the same, billb is just using the default values
+
+billa.print_bidule()
+billa.bidule 
+billb.truc
+billb.chouette
+
+
+###############################################################################
+#%% Inheritance and passing attributes with composition
+## Passing both methods and instances
+## Do NOT use super: "do not instantiate an instance of a subclass with super"
+###############################################################################
+# Differentiate between :
+# Inheritance: gives an empty class with methods from parents
+# Instantiation with super to "load" the parent with specific attributes
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class Parent: 
+    truc: int=3 # Need to be filled in, else Enfant instantiation incomplete
+    bidule: str='bidule'
+
+    def __post_init__(self):
+        self.truc2 = self.truc*self.truc
+    
+    def enfant(self, chouette):
+    # Because Enfant inherits from Parent, needs to fill truc and bidule
+        return(Enfant(truc=self.truc, bidule=self.bidule,
+                      parent=self, chouette=chouette))
+    
+    def print_bidule(self):
+        print(self.bidule)
+
+@dataclass
+class Enfant(Parent):
+    parent: Any='parent class' # Need it to keep the instances
+    chouette: str='chouette'
+
+    def __post_init__(self):
+        self.__dict__.update(self.parent.__dict__) # Import all attributes
+                
+    def test(self):
+        print('good job')
+
+
+bill = Parent(3, 'jill').enfant('mini chouette')
+
+bill.bidule
+bill.truc
+bill.chouette
+bill.print_bidule() # Methods have been passed as well !
+
+
+# With slots to optimize the class
+@dataclass
+class Example:
+    __slots__ = ['name', 'lon', 'lat']
+    name: str
+    lon: float
+    lat: float
+
+
+###############################################################################
+#%% Containers for the recursive density estimation
+###############################################################################
+# Three layers: historical dates / constrained-unconstrained / stress periods
+@dataclass
+class DensityStressTest: # Parent class
+    def __post_init__(self): # Post-initialize the attributes
+        self.unconstrained_st = dict() # Initialize dictionaries
+        self.constrained_st = dict()
+
+    def __dst_unit_test__(self):
+        u_l = sorted(self.unconstrained_seq.keys())
+        v_l = sorted(self.constrained_seq.keys())
+        msg = 'Dates seq are not consistent bw constrained and unconstrained'
+        assert all(u_l == v_l), msg
+        
+@dataclass        
+class StressSequence(dict): # Customized dictionary class
+    starting_point: datetime.datetime
+    def __post_init__(self): # Post-initialize the attributes
+        super().__init__() # Init all attributes from dict
+        self.starting_point = f'{starting_point:%Y-%m-%d}' # Format
+@dataclass
+class StressPeriod: # Store the result of a single estimation
+    idx: int # The stressed index
+    y_esn: ESNrv # A ESN random variate object
+    fci_esn: ESNrv # A ESN random variate object
+    c_esn: ESNrv # A ESN random variate object
+
+
+###############################################################################
+#%% Difference between classmethod and staticmethod
+###############################################################################
+class Date(object):
+
+    def __init__(self, day=0, month=0, year=0):
+        self.day = day
+        self.month = month
+        self.year = year
+
+    @classmethod # Can instantiate the current class with other attributes
+    def from_string(cls, date_as_string):
+        day, month, year = map(int, date_as_string.split('-'))
+        date1 = cls(day, month, year) # Class attributes
+        return(date1)
+
+    @staticmethod
+    def is_date_valid(date_as_string): # no self
+        day, month, year = map(int, date_as_string.split('-'))
+        return day <= 31 and month <= 12 and year <= 3999
+
+date2 = Date.from_string('11-09-2012')
+is_date = Date.is_date_valid('11-09-2012')
+#+end_src python
 
 * System Functions
 ** Files and folders
@@ -1409,6 +1614,10 @@ import datetime as dt
 repr(dt.datetime(2015,1,1))
 str(dt.datetime(2015,1,1))
 
+# Remove special characters and trailing spaces
+import re # Regular expressions
+new_cols_l = [re.sub('[^A-Za-z0-9/]+', ' ', x).strip() for x in dl.columns]
+
 #+end_src
 
 * Floating points
@@ -1429,6 +1638,9 @@ df['timestamp'] = pd.to_datetime(df['timestamp'], format = '%Y-%m-%d %H:%M:%S.%f
 ## Manipulating dates, using apply on two (or more columns) with a lambda function
 db['date'] = db.apply(lambda x: date(int(x['year']),3*int(x['quarter'][-1]),1),
                       axis=1) + pd.offsets.QuarterEnd()
+
+# Drop NaT
+dl0 = dl0.loc[dl0.index.notnull()] # Drop NaT
 
 ## End of dates, end of quarter
 df0['date'] = pd.to_datetime(df0['date']) + pd.offsets.QuarterEnd()
@@ -1865,11 +2077,9 @@ ax4.xaxis.set_major_locator(MaxNLocator(integer=True))
 ax1.set_xticks(cond_5_mean.index[::32])
 ax1.set_xticklabels([str(x)[:4] for x in cond_5_mean.index[::32]], rotation=45)
 
-
 # Reset matplotlib style
 import matplotlib as mpl
 mpl.rcParams.update(mpl.rcParamsDefault)
-
 
 # Cool horizontal legend
 ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
@@ -2068,6 +2278,66 @@ http://pandas.pydata.org/pandas-docs/stable/visualization.html
 
 ** Plotly
 from plotly.graph_objs import Bar, Scatter, Figure, Layout
+
+** Concise date formatter
+#+begin_src python
+import matplotlib.dates as mdates
+
+sns.set(style='white', font_scale=2, palette='deep', font='arial')
+fig, axs = plt.subplots(3, 2, sharex=False)
+ax1, ax2, ax3, ax4, ax5, ax6 = axs.ravel()
+
+ax1.plot(dll.loc[cond2, 'real_gdp_growth_waemu'], lw=2, color='tab:blue')
+ax2.plot(dll.loc[cond2, 'nsk_quantile_gdp_growth'],
+         lw=2, ls='--', color='tab:red')
+
+ax3.plot(dll.loc[cond3, 'real_gdp_growth_waemu'], lw=2, color='tab:blue')
+ax4.plot(dll.loc[cond3, 'nsk_quantile_gdp_growth'],
+         lw=2, ls='--', color='tab:red')
+
+ax5.plot(dll.loc[cond4, 'real_gdp_growth_waemu'], lw=2, color='tab:blue')
+ax6.plot(dll.loc[cond4, 'nsk_quantile_gdp_growth'],
+         lw=2, ls='--', color='tab:red')
+
+# Format dates elegantly
+for axe in [ax1, ax2, ax3, ax4, ax5, ax6]:
+    locator = mdates.AutoDateLocator(minticks=1, maxticks=4)
+    formatter = mdates.ConciseDateFormatter(locator)
+
+    axe.xaxis.set_major_locator(locator)
+    axe.xaxis.set_major_formatter(formatter)
+
+# Titles
+ax1.set_title('Historical GDP Path', y=1.02)
+ax2.set_title('Equivalent Quantile Path', y=1.02)
+#fig.suptitle('Benchmarking WAEMU FSAP Stress-Test Paths', y=0.98)
+    
+plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1,
+                    wspace=0.3, hspace=0.4)
+plt.show()
+#+end_src
+
+** Shaded areas for crisis time
+
+#+begin_src python
+x = dp.index
+y = dp['real_gdp_growth_waemu']
+import matplotlib.transforms as mtransforms # important
+
+sns.set(style='white', font_scale=2, palette='deep', font='arial')
+fig, ax1 = plt.subplots(1, 1)
+ax1.plot(x, y)
+
+# Transform helps to use the coordinate for x-axis and y-axis
+trans = mtransforms.blended_transform_factory(ax1.transData, ax1.transAxes)
+cond1 = (x>'1991') & (x<'1995')
+cond2 = (x>'2010') & (x<'2013') 
+ax1.fill_between(x, 0, 1, facecolor='tab:red', where= cond1 | cond2,
+                 alpha=0.5, transform=trans)
+
+ax1.set_ylabel('WAEMU GDP Growth in Percentage Points', labelpad=20)
+plt.show()
+#+end_src 
 
 ** Ipython
 
